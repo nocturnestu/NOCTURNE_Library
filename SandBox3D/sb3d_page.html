@@ -367,7 +367,7 @@
 
         <div class="topbar">
             <a href="https://nocturnestu.pages.dev" class="topbar-brand">
-                <img src="./nocturneassets/logo2.png" alt="..." class="topbar-logo">
+                <img src="https://raw.githubusercontent.com/hexonlabs/NOCTURNE_Library/main/nocturneassets/logo2.png" alt="..." class="topbar-logo">
                 <span class="topbar-name">PRISM</span>
             </a>
             <div class="topbar-pill">SB3D</div>
@@ -420,11 +420,11 @@
             const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 900;
 
             if (isMobile) {
-                targetUrl = "SandBox3D_Mobile.html";
+                targetUrl = "SandBox3D_Mobile";
                 versionText.textContent = "Sand Box 3D for Mobile";
                 platformLabel.textContent = "Mobile build detected";
             } else {
-                targetUrl = "SandBox3D_PC.html";
+                targetUrl = "SandBox3D_PC";
                 versionText.textContent = "Sand Box 3D for PC";
                 platformLabel.textContent = "PC build detected";
             }

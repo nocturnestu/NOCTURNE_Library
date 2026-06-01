@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MATH OR DIE</title>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0d0d;
+    --surface: #161616;
+    --accent: #e8ff00;
+    --text: #f0f0f0;
+    --muted: #666;
+    --border: #2a2a2a;
+  }
+
+  html, body {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease;
+    position: relative;
+  }
+
+  body.correct { background: #003c00; }
+  body.wrong { background: #3c0000; }
+
+  #flash-overlay {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0;
+    transition: opacity 0.1s;
+  }
+
+  #canvas {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  #app {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+    width: min(560px, 92vw);
+  }
+
+  #title {
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: clamp(2rem, 8vw, 4rem);
+    letter-spacing: 0.08em;
+    color: var(--accent);
+    text-shadow: 0 0 40px rgba(232, 255, 0, 0.3);
+    user-select: none;
+    text-align: center;
+  }
+
+  #scoreboard {
+    display: flex;
+    gap: 24px;
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+
+  #scoreboard span { color: var(--text); font-weight: 700; }
+
+  #question-card {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 40px 32px;
+    text-align: center;
+    transition: transform 0.05s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  body.correct #question-card {
+    border-color: #00ff44;
+    box-shadow: 0 0 60px rgba(0,255,68,0.2), inset 0 0 40px rgba(0,255,68,0.05);
+  }
+
+  body.wrong #question-card {
+    border-color: #ff2200;
+    box-shadow: 0 0 60px rgba(255,34,0,0.3), inset 0 0 40px rgba(255,34,0,0.07);
+  }
+
+  #op-label {
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  #question-text {
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: clamp(2.5rem, 10vw, 5.5rem);
+    color: var(--text);
+    line-height: 1;
+    transition: color 0.15s ease;
+  }
+
+  body.correct #question-text { color: #00ff44; }
+  body.wrong #question-text { color: #ff4422; }
+
+  #sub-info {
+    margin-top: 16px;
+    font-size: 13px;
+    color: var(--muted);
+    min-height: 20px;
+  }
+
+  #input-row {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+  }
+
+  #answer-input {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 1.5rem;
+    font-weight: 700;
+    padding: 16px 20px;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    text-align: center;
+  }
+
+  #answer-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(232,255,0,0.12);
+  }
+
+  body.wrong #answer-input {
+    border-color: #ff2200;
+    animation: shake-input 0.4s ease;
+  }
+
+  body.correct #answer-input {
+    border-color: #00ff44;
+  }
+
+  #submit-btn {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: 1.1rem;
+    letter-spacing: 0.05em;
+    padding: 0 28px;
+    cursor: pointer;
+    transition: transform 0.1s, opacity 0.1s;
+    white-space: nowrap;
+  }
+
+  #submit-btn:hover { transform: scale(1.04); }
+  #submit-btn:active { transform: scale(0.96); }
+
+  #feedback {
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: clamp(1.2rem, 4vw, 1.8rem);
+    letter-spacing: 0.05em;
+    min-height: 44px;
+    text-align: center;
+    transition: color 0.15s;
+  }
+
+  #feedback.correct { color: #00ff44; }
+  #feedback.wrong { color: #ff4422; }
+
+  #progress-bar-wrap {
+    width: 100%;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  #progress-bar {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+  }
+
+  #streak-display {
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+  }
+
+  #streak-display.lit { color: #ff9900; }
+
+  #next-btn {
+    display: none;
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    border-radius: 10px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    padding: 12px 32px;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+  }
+
+  #next-btn:hover { background: rgba(232,255,0,0.08); transform: scale(1.03); }
+  #next-btn:active { transform: scale(0.96); }
+
+  @keyframes shake-input {
+    0%,100% { transform: translateX(0); }
+    20% { transform: translateX(-8px) rotate(-1deg); }
+    40% { transform: translateX(10px) rotate(1deg); }
+    60% { transform: translateX(-6px); }
+    80% { transform: translateX(6px); }
+  }
+
+  .emoji-particle {
+    position: fixed;
+    font-size: 2rem;
+    pointer-events: none;
+    z-index: 999;
+    user-select: none;
+    will-change: transform, opacity;
+  }
+
+  .ui-shake {
+    animation: ui-chaos 0.5s ease forwards;
+  }
+
+  @keyframes ui-chaos {
+    0% { transform: translate(0,0) rotate(0deg); }
+    15% { transform: translate(-12px, 8px) rotate(-5deg); }
+    30% { transform: translate(14px,-6px) rotate(4deg); }
+    50% { transform: translate(-8px, 10px) rotate(-3deg); }
+    70% { transform: translate(10px,-4px) rotate(2deg); }
+    85% { transform: translate(-4px, 6px) rotate(-1deg); }
+    100% { transform: translate(0,0) rotate(0deg); }
+  }
+</style>
+</head>
+<body>
+
+<div id="flash-overlay"></div>
+<canvas id="canvas"></canvas>
+
+<div id="app">
+  <div id="title">MATH OR DIE</div>
+
+  <div id="scoreboard">
+    SCORE: <span id="score-val">0</span> &nbsp;|&nbsp; CORRECT: <span id="correct-val">0</span> &nbsp;|&nbsp; WRONG: <span id="wrong-val">0</span>
+  </div>
+
+  <div id="progress-bar-wrap">
+    <div id="progress-bar" style="width:0%"></div>
+  </div>
+
+  <div id="question-card">
+    <div id="op-label">loading...</div>
+    <div id="question-text">?</div>
+    <div id="sub-info"></div>
+  </div>
+
+  <div id="input-row">
+    <input id="answer-input" type="number" placeholder="Your answer" autocomplete="off" />
+    <button id="submit-btn" onclick="checkAnswer()">CHECK</button>
+  </div>
+
+  <div id="feedback"></div>
+  <div id="streak-display">streak: 0 🔥</div>
+  <button id="next-btn" onclick="nextQuestion()">NEXT QUESTION →</button>
+</div>
+
+<script>
+const CORRECT_EMOJIS = ['🎉','✅','🏆','💯','🌟','🥳','🎊','😎','🚀','💥','🤩','✨','🔥','👑','🦾','⚡','🎯','🥇','💪','🌈'];
+const WRONG_EMOJIS = ['😡','💀','🤬','👿','🔴','💢','😤','🤮','🗑️','💩','☠️','🥴','😭','😱','🤡','👎','⛔','🚨','💔','🤯'];
+
+const OPS = [
+  { symbol: '+', label: 'ADDITION', fn: (a,b) => a+b, gen: () => [rnd(1,99), rnd(1,99)] },
+  { symbol: '−', label: 'SUBTRACTION', fn: (a,b) => a-b, gen: () => { let a=rnd(10,99), b=rnd(1,a); return [a,b]; } },
+  { symbol: '×', label: 'MULTIPLICATION', fn: (a,b) => a*b, gen: () => [rnd(2,12), rnd(2,12)] },
+  { symbol: '÷', label: 'DIVISION', fn: (a,b) => a*b, gen: () => { let b=rnd(2,12), a=rnd(1,12); return [a*b, b]; }, answerOverride: (a,b) => a/b },
+];
+
+let score = 0, correctCount = 0, wrongCount = 0, streak = 0;
+let currentAnswer = null;
+let locked = false;
+let totalAsked = 0;
+let emojiInterval = null;
+
+function rnd(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+function generateQuestion() {
+  const op = OPS[Math.floor(Math.random() * OPS.length)];
+  const [a, b] = op.gen();
+  const answer = op.answerOverride ? op.answerOverride(a, b) : op.fn(a, b);
+  return { a, b, op, answer: Math.round(answer * 100) / 100 };
+}
+
+function loadQuestion() {
+  locked = false;
+  const q = generateQuestion();
+  currentAnswer = q.answer;
+
+  document.getElementById('op-label').textContent = q.op.label;
+  document.getElementById('question-text').textContent = `${q.a} ${q.op.symbol} ${q.b} = ?`;
+  document.getElementById('sub-info').textContent = '';
+  document.getElementById('answer-input').value = '';
+  document.getElementById('answer-input').disabled = false;
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('feedback').className = '';
+  document.getElementById('next-btn').style.display = 'none';
+  document.getElementById('submit-btn').style.display = '';
+  document.body.className = '';
+  totalAsked++;
+  updateProgress();
+  document.getElementById('answer-input').focus();
+
+  stopEmojiRain();
+}
+
+function checkAnswer() {
+  if (locked) return;
+  const raw = document.getElementById('answer-input').value.trim();
+  if (raw === '') return;
+  const val = parseFloat(raw);
+  locked = true;
+
+  document.getElementById('answer-input').disabled = true;
+  document.getElementById('submit-btn').style.display = 'none';
+  document.getElementById('next-btn').style.display = 'block';
+
+  if (Math.abs(val - currentAnswer) < 0.01) {
+    handleCorrect();
+  } else {
+    handleWrong();
+  }
+}
+
+function handleCorrect() {
+  correctCount++;
+  score += 10 + streak * 2;
+  streak++;
+  document.body.className = 'correct';
+  document.getElementById('feedback').textContent = pickCorrectMsg();
+  document.getElementById('feedback').className = 'correct';
+  document.getElementById('sub-info').textContent = `Answer: ${currentAnswer}`;
+  updateUI();
+  flashScreen('rgba(0,255,100,0.15)');
+  startEmojiRain(CORRECT_EMOJIS, false);
+}
+
+function handleWrong() {
+  wrongCount++;
+  score = Math.max(0, score - 5);
+  streak = 0;
+  document.body.className = 'wrong';
+  document.getElementById('feedback').textContent = pickWrongMsg();
+  document.getElementById('feedback').className = 'wrong';
+  document.getElementById('sub-info').textContent = `Correct was: ${currentAnswer}`;
+  updateUI();
+  flashScreen('rgba(255,30,0,0.2)');
+  startEmojiRain(WRONG_EMOJIS, true);
+  shakeEverything();
+}
+
+function pickCorrectMsg() {
+  const msgs = ['CORRECT! ABSOLUTELY COOKED 🔥', 'YESSSS GET IT 💯', 'GOATED BEHAVIOR 👑', 'LETHAL ACCURACY 🎯', 'SMARTEST IN THE ROOM 🧠', 'BUILT DIFFERENT 🦾', 'NO CAP THAT\'S RIGHT ✅', 'CALCULATED 😎'];
+  return msgs[Math.floor(Math.random()*msgs.length)];
+}
+
+function pickWrongMsg() {
+  const msgs = ['NOPE. TRY AGAIN CHAMP 💀', 'COOKED YOURSELF 🤡', 'MATH IS NOT FOR YOU TODAY 😭', 'YIKES. BIG YIKES. ☠️', 'TOUCH GRASS AND COME BACK 🗑️', 'DELETED. 💥', 'YOUR CALCULATOR CALLED. IT\'S EMBARRASSED 😤', 'THAT\'S... NOT IT 🤬'];
+  return msgs[Math.floor(Math.random()*msgs.length)];
+}
+
+function shakeEverything() {
+  const els = document.querySelectorAll('#question-card, #title, #scoreboard, #streak-display');
+  els.forEach(el => {
+    el.classList.remove('ui-shake');
+    void el.offsetWidth;
+    el.classList.add('ui-shake');
+  });
+
+  let shakes = 0;
+  const iv = setInterval(() => {
+    if (shakes++ > 5) { clearInterval(iv); document.getElementById('app').style.transform = ''; return; }
+    const x = (Math.random()-0.5)*16;
+    const y = (Math.random()-0.5)*8;
+    document.getElementById('app').style.transform = `translate(${x}px, ${y}px) rotate(${(Math.random()-0.5)*2}deg)`;
+  }, 60);
+  setTimeout(() => { clearInterval(iv); document.getElementById('app').style.transform = ''; }, 400);
+}
+
+function flashScreen(color) {
+  const overlay = document.getElementById('flash-overlay');
+  overlay.style.background = color;
+  overlay.style.opacity = '1';
+  setTimeout(() => { overlay.style.opacity = '0'; }, 120);
+}
+
+function startEmojiRain(pool, aggressive) {
+  stopEmojiRain();
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const particles = [];
+  const count = aggressive ? 45 : 35;
+
+  function spawnBatch() {
+    for (let i = 0; i < (aggressive ? 8 : 5); i++) {
+      const emoji = pool[Math.floor(Math.random()*pool.length)];
+      const size = aggressive ? rnd(28,60) : rnd(24,52);
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: -60,
+        vx: (Math.random()-0.5)*(aggressive?8:4),
+        vy: rnd(aggressive?5:3, aggressive?14:8),
+        rot: Math.random()*360,
+        vr: (Math.random()-0.5)*(aggressive?15:6),
+        emoji,
+        size,
+        alpha: 1,
+        life: 1,
+        decay: 0.004 + Math.random()*0.006
+      });
+    }
+  }
+
+  spawnBatch();
+  let spawns = 0;
+  const maxSpawns = aggressive ? 6 : 5;
+
+  emojiInterval = setInterval(() => {
+    if (spawns++ < maxSpawns) spawnBatch();
+  }, 300);
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (let i = particles.length-1; i >= 0; i--) {
+      const p = particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.rot += p.vr;
+      p.life -= p.decay;
+      p.alpha = Math.max(0, p.life);
+      if (p.y > canvas.height + 80 || p.life <= 0) { particles.splice(i,1); continue; }
+      ctx.save();
+      ctx.globalAlpha = p.alpha;
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot * Math.PI/180);
+      ctx.font = `${p.size}px serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(p.emoji, 0, 0);
+      ctx.restore();
+    }
+    if (particles.length > 0) requestAnimationFrame(draw);
+    else { ctx.clearRect(0, 0, canvas.width, canvas.height); }
+  }
+  draw();
+}
+
+function stopEmojiRain() {
+  if (emojiInterval) { clearInterval(emojiInterval); emojiInterval = null; }
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+function nextQuestion() {
+  document.getElementById('app').style.transform = '';
+  loadQuestion();
+}
+
+function updateUI() {
+  document.getElementById('score-val').textContent = score;
+  document.getElementById('correct-val').textContent = correctCount;
+  document.getElementById('wrong-val').textContent = wrongCount;
+  const sd = document.getElementById('streak-display');
+  sd.textContent = `streak: ${streak} 🔥`;
+  sd.className = streak >= 3 ? 'lit' : '';
+  updateProgress();
+}
+
+function updateProgress() {
+  const pct = Math.min(100, (correctCount / Math.max(1, totalAsked)) * 100);
+  document.getElementById('progress-bar').style.width = pct + '%';
+}
+
+document.getElementById('answer-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    if (locked) nextQuestion();
+    else checkAnswer();
+  }
+});
+
+window.addEventListener('resize', () => {
+  const canvas = document.getElementById('canvas');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+});
+
+loadQuestion();
+</script>
+</body>
+</html>

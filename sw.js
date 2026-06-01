@@ -1,0 +1,180 @@
+const CACHE_NAME = 'PRISM-v26.7.5';
+
+const PRECACHE_URLS = [
+    '/',
+    '/index.html',
+    '/nocturneassets/logo.png',
+    '/nocturneassets/notifications.json',
+    'https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Space+Grotesk:wght@300;400;500;600;700&display=swap',
+    'https://fonts.googleapis.com/icon?family=Material+Icons+Round',
+    './nocturneassets/logo192.png',
+    './SandBox3D/sb3d_page',
+    './RiftRunners2D/rr2d_page',
+    './RiftRunners2D/RiftRunners2D.html',
+    './SandBox3D/SandBox3D_PC.html',
+    './SandBox3D/SandBox3D_Mobile.html',
+    'https://cdnjs.cloudflare.com/ajax/libs/phaser/3.60.0/phaser.min.js',
+    'https://cdn.jsdelivr.net/npm/babylonjs@9.0.0/babylon.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js',
+    'https://cdn.babylonjs.com/ammo.js',
+    'https://cdn.jsdelivr.net/npm/babylonjs-loaders@9.0.0/babylonjs.loaders.min.js',
+    'https://cdn.jsdelivr.net/npm/babylonjs-inspector@9.0.0/babylon.inspector.bundle.js',
+    './asset/sb3duianim_mobile.js',
+    './SandBox3D/asset/sb3duianim_pc.js',
+    './SandBox3D/asset/sb3dmatyou.js',
+    './SandBox3D/asset/sb3dammo.js',
+    './Other/ismycompteureron',
+    './Other/devcheck',
+    './Other/notmoving',
+    './Other/gifview',
+    './Other/mathlol'
+];
+
+self.addEventListener('install', e => {
+    self.skipWaiting();
+
+    const params = new URLSearchParams(self.location.search);
+    const isStandalone = params.get('standalone') === 'true';
+
+    e.waitUntil(
+        caches.open(CACHE_NAME).then(async (cache) => {
+            let processedAssets = 0;
+            const totalAssets = PRECACHE_URLS.length;
+
+            async function broadcastProgress() {
+                processedAssets++;
+                const progress = Math.round((processedAssets / totalAssets) * 100);
+                const clientsList = await self.clients.matchAll({ includeUncontrolled: true, type: 'window' });
+                for (const client of clientsList) {
+                    client.postMessage({ type: 'CACHE_PROGRESS', progress: progress });
+                }
+            }
+
+            const downloadTasks = PRECACHE_URLS.map(async (url) => {
+                const absoluteUrl = new URL(url, self.location.origin).href;
+                try {
+                    const response = await fetch(absoluteUrl);
+                    if (response.status === 200) {
+                        await cache.put(absoluteUrl, response.clone());
+                        if (isStandalone) {
+                            const blob = await response.blob();
+                            await setIDBData(absoluteUrl, {
+                                blob: blob,
+                                type: response.headers.get('content-type')
+                            });
+                        }
+                    }
+                } catch (err) {
+                    console.error("Precaching error for: " + absoluteUrl, err);
+                } finally {
+                    await broadcastProgress();
+                }
+            });
+
+            await Promise.all(downloadTasks);
+        })
+    );
+});
+
+self.addEventListener('activate', e => {
+    e.waitUntil(
+        caches.keys().then(keys =>
+            Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+        )
+    );
+    self.clients.claim();
+});
+
+function getDB() {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open('NOCTURNE_Studios_DB', 1);
+        request.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains('dynamic-cache')) {
+                db.createObjectStore('dynamic-cache');
+            }
+        };
+        request.onsuccess = (e) => {
+            const db = e.target.result;
+            db.onversionchange = () => {
+                db.close();
+            };
+            resolve(db);
+        };
+        request.onerror = (e) => reject(e.target.error);
+    });
+}
+
+function getIDBData(key) {
+    return getDB().then(db => {
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction('dynamic-cache', 'readonly');
+            const store = transaction.objectStore('dynamic-cache');
+            const request = store.get(key);
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    });
+}
+
+function setIDBData(key, value) {
+    return getDB().then(db => {
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction('dynamic-cache', 'readwrite');
+            const store = transaction.objectStore('dynamic-cache');
+            const request = store.put(value, key);
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+    });
+}
+
+self.addEventListener('fetch', e => {
+    const url = e.request.url;
+
+    if (url.endsWith('.mp3') || url.endsWith('.mp4')) {
+        e.respondWith(
+            fetch(e.request).catch(() => new Response(new Blob([]), {
+                status: 200,
+                headers: { 'Content-Type': url.endsWith('.mp4') ? 'video/mp4' : 'audio/mpeg' }
+            }))
+        );
+        return;
+    }
+
+    if (e.request.method !== 'GET' || url.startsWith('chrome-extension://')) return;
+
+    const params = new URLSearchParams(self.location.search);
+    const isStandalone = params.get('standalone') === 'true';
+
+    e.respondWith((async () => {
+        const cacheMatch = await caches.match(e.request);
+        if (cacheMatch) return cacheMatch;
+
+        if (isStandalone) {
+            try {
+                const idbData = await getIDBData(url);
+                if (idbData) {
+                    if (idbData.blob) {
+                        return new Response(idbData.blob, {
+                            headers: { 'Content-Type': idbData.type || 'application/octet-stream' }
+                        });
+                    }
+                    return new Response(JSON.stringify(idbData), {
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                }
+            } catch (_) { }
+        }
+
+        return fetch(e.request).catch(() => {
+            if (url.includes('/api/settings') || url.includes('/userdata/')) {
+                return new Response(JSON.stringify({ error: 'Offline' }), {
+                    status: 503,
+                    headers: { 'Content-Type': 'application/json' }
+                });
+            }
+            return new Response('', { status: 404 });
+        });
+    })());
+});

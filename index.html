@@ -2808,7 +2808,6 @@
                         if (isStandalone) {
                             const ok = confirm(`Prism Update\n\nNew version detected: ${liveVersion}\n\nDo you want to update now?\n\nClick OK to open up Cache Mode\nClick Cancel to do nothing`);
                             if (ok) {
-                                localStorage.setItem(SW_VERSION_KEY, liveVersion);
                                 openCacheModePicker(true);
                             } else {
                                 if (typeof fireUpdateNotif === 'function') fireUpdateNotif('prism_update_pending');

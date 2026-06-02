@@ -1367,6 +1367,76 @@
             transform: translateY(0);
         }
 
+        .dl-pipeline {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 24px;
+            width: min(320px, 88vw);
+        }
+
+        .dl-pipeline-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 14px;
+            padding: 10px 14px;
+            transition: background 0.3s ease, border-color 0.3s ease;
+        }
+
+        .dl-pipeline-row.active {
+            background: var(--primary-dim);
+            border-color: var(--border-accent);
+        }
+
+        .dl-pipeline-row.done {
+            background: rgba(74, 222, 128, 0.06);
+            border-color: rgba(74, 222, 128, 0.18);
+        }
+
+        .dl-pipeline-row.error {
+            background: rgba(248, 113, 113, 0.06);
+            border-color: rgba(248, 113, 113, 0.18);
+        }
+
+        .dl-phase-icon {
+            font-size: 17px;
+            color: var(--text-muted);
+            flex-shrink: 0;
+            transition: color 0.3s ease;
+        }
+
+        .dl-pipeline-row.active .dl-phase-icon { color: var(--primary); animation: spin 1.2s linear infinite; }
+        .dl-pipeline-row.done .dl-phase-icon   { color: #4ade80; animation: none; }
+        .dl-pipeline-row.error .dl-phase-icon  { color: #f87171; animation: none; }
+
+        .dl-phase-label {
+            flex: 1;
+            font-size: 12.5px;
+            font-weight: 500;
+            color: var(--text-sub);
+            font-family: 'DM Sans', sans-serif;
+        }
+
+        .dl-pipeline-row.active .dl-phase-label { color: var(--text); }
+        .dl-pipeline-row.done .dl-phase-label   { color: #4ade80; }
+
+        .dl-phase-status {
+            font-size: 10.5px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        .dl-pipeline-row.active .dl-phase-status { color: var(--primary); }
+        .dl-pipeline-row.done .dl-phase-status   { color: #4ade80; }
+        .dl-pipeline-row.error .dl-phase-status  { color: #f87171; }
+
         #cache-mode-page {
             position: fixed;
             inset: 0;
@@ -1928,14 +1998,31 @@
         <div class="loader-ring-wrap show" style="transform: scale(1); opacity: 1;">
             <div class="loader-ring"></div>
             <div class="loader-ring-2"></div>
-            <i class="material-icons-round dl-icon-wrap">download</i>
+            <i class="material-icons-round dl-icon-wrap" id="dl-main-icon">download</i>
         </div>
         <div class="loader-wordmark show" style="opacity: 1; transform: translateY(0);">
-            <div class="loader-wordmark-name">RE-CACHING</div>
-            <div class="loader-wordmark-sub">Updating System Assets</div>
+            <div class="loader-wordmark-name" id="dl-phase-title">RE-CACHING</div>
+            <div class="loader-wordmark-sub" id="dl-phase-sub">Preparing...</div>
         </div>
-        <div class="loader-bar-wrap show">
+        <div class="loader-bar-wrap show" style="width: 220px;">
             <div class="loader-bar" id="download-bar"></div>
+        </div>
+        <div class="dl-pipeline" id="dl-pipeline">
+            <div class="dl-pipeline-row" id="dl-phase-clear">
+                <span class="dl-phase-icon material-icons-round">pending</span>
+                <span class="dl-phase-label">Clear old cache &amp; DB</span>
+                <span class="dl-phase-status">Waiting</span>
+            </div>
+            <div class="dl-pipeline-row" id="dl-phase-download">
+                <span class="dl-phase-icon material-icons-round">pending</span>
+                <span class="dl-phase-label">Download assets</span>
+                <span class="dl-phase-status">Waiting</span>
+            </div>
+            <div class="dl-pipeline-row" id="dl-phase-cache">
+                <span class="dl-phase-icon material-icons-round">pending</span>
+                <span class="dl-phase-label">Write to cache</span>
+                <span class="dl-phase-status">Waiting</span>
+            </div>
         </div>
         <div class="dl-tip-box" id="download-tip">Loading lab logs...</div>
     </div>
@@ -2109,8 +2196,20 @@
             const dlPage = document.getElementById('download-page');
             const dlBar = document.getElementById('download-bar');
             const dlTip = document.getElementById('download-tip');
+            const dlTitle = document.getElementById('dl-phase-title');
+            const dlSub = document.getElementById('dl-phase-sub');
 
             dlPage.classList.add('open');
+            dlBar.style.transition = 'none';
+            dlBar.style.width = '0%';
+
+            function setPhase(rowId, state, statusText, icon) {
+                const row = document.getElementById(rowId);
+                if (!row) return;
+                row.className = 'dl-pipeline-row ' + state;
+                row.querySelector('.dl-phase-status').textContent = statusText;
+                row.querySelector('.dl-phase-icon').textContent = icon;
+            }
 
             const tips = [
                 "Even bedrock can be turned to rubble under the right conditions.",
@@ -2183,50 +2282,80 @@
             cycleTip();
             const tipInterval = setInterval(cycleTip, 3000);
 
-            dlBar.style.transition = 'width 0.1s linear';
-            dlBar.style.width = '0%';
-
             try {
+                dlTitle.textContent = 'CLEARING';
+                dlSub.textContent = 'Purging old cache & storage';
+                setPhase('dl-phase-clear', 'active', 'Running', 'sync');
+
                 if ('caches' in window) {
                     const keys = await caches.keys();
-                    await Promise.all(keys.map(key => caches.delete(key)));
+                    await Promise.all(keys.map(k => caches.delete(k)));
                 }
 
                 if ('serviceWorker' in navigator) {
                     const registrations = await navigator.serviceWorker.getRegistrations();
-                    for (let registration of registrations) {
-                        await registration.unregister();
-                    }
+                    for (const reg of registrations) await reg.unregister();
                 }
 
-                try {
-                    const dbReq = indexedDB.deleteDatabase('NOCTURNE_Studios_DB');
-                    await new Promise((resolve, reject) => {
-                        dbReq.onsuccess = () => resolve();
-                        dbReq.onerror = () => reject();
-                    });
-                } catch (e) {
-                    console.warn("IndexedDB deletion failed, continuing anyway", e);
-                }
+                await new Promise((resolve) => {
+                    const openReq = indexedDB.open('NOCTURNE_Studios_DB');
+                    openReq.onsuccess = (e) => {
+                        const db = e.target.result;
+                        db.close();
+                        const delReq = indexedDB.deleteDatabase('NOCTURNE_Studios_DB');
+                        delReq.onsuccess = () => resolve();
+                        delReq.onerror = () => { console.warn('IDB delete error, proceeding'); resolve(); };
+                        delReq.onblocked = () => {
+                            console.warn('IDB delete blocked — forcing close and retrying');
+                            db.close();
+                            const retryDel = indexedDB.deleteDatabase('NOCTURNE_Studios_DB');
+                            retryDel.onsuccess = () => resolve();
+                            retryDel.onerror = () => resolve();
+                        };
+                    };
+                    openReq.onerror = () => {
+                        const delReq = indexedDB.deleteDatabase('NOCTURNE_Studios_DB');
+                        delReq.onsuccess = () => resolve();
+                        delReq.onerror = () => resolve();
+                    };
+                });
+
+                setPhase('dl-phase-clear', 'done', 'Done', 'check_circle');
+
+                dlTitle.textContent = 'DOWNLOADING';
+                dlSub.textContent = mode === 'prism' ? 'Prism core assets' : 'All assets';
+                setPhase('dl-phase-download', 'active', 'Fetching', 'sync');
+                dlBar.style.transition = 'width 0.1s linear';
 
                 if (_cacheProgressHandler && navigator.serviceWorker) {
                     navigator.serviceWorker.removeEventListener('message', _cacheProgressHandler);
                 }
 
                 _cacheProgressHandler = (event) => {
-                    if (event.data && event.data.type === 'CACHE_PROGRESS') {
-                        const progress = event.data.progress || 0;
-                        dlBar.style.width = progress + '%';
-                        if (progress >= 100) {
-                            clearInterval(tipInterval);
-                            setTimeout(() => { window.location.reload(); }, 500);
-                        }
+                    if (!event.data || event.data.type !== 'CACHE_PROGRESS') return;
+                    const progress = event.data.progress || 0;
+                    dlBar.style.width = progress + '%';
+
+                    if (progress > 0 && progress < 100) {
+                        setPhase('dl-phase-download', 'active', `${progress}%`, 'sync');
+                        setPhase('dl-phase-cache', 'active', 'Writing', 'sync');
+                        dlTitle.textContent = 'CACHING';
+                        dlSub.textContent = `${progress}% complete`;
+                    }
+
+                    if (progress >= 100) {
+                        setPhase('dl-phase-download', 'done', 'Done', 'check_circle');
+                        setPhase('dl-phase-cache', 'done', 'Done', 'check_circle');
+                        dlTitle.textContent = 'COMPLETE';
+                        dlSub.textContent = 'Reloading...';
+                        clearInterval(tipInterval);
+                        setTimeout(() => { window.location.reload(); }, 600);
                     }
                 };
                 navigator.serviceWorker.addEventListener('message', _cacheProgressHandler);
 
                 const swUrl = `/sw.js?update=${Date.now()}&standalone=${isStandalone}&cacheMode=${mode}`;
-                const reg = await navigator.serviceWorker.register(swUrl);
+                await navigator.serviceWorker.register(swUrl);
 
                 try {
                     const swRes = await fetch('/sw.js', { cache: 'no-store' });
@@ -2234,21 +2363,17 @@
                     const vMatch = swText.match(/const CACHE_NAME\s*=\s*['"](.+?)['"]/);
                     if (vMatch) {
                         const freshVersion = vMatch[1];
-                        const storedVersion = localStorage.getItem('PRISM_SW_VERSION');
-                        if (freshVersion !== storedVersion) {
+                        if (freshVersion !== localStorage.getItem('PRISM_SW_VERSION')) {
                             localStorage.setItem('PRISM_SW_VERSION', freshVersion);
                         }
                     }
                 } catch (_) { }
 
-                if (reg.active) {
-                    reg.active.postMessage({ type: 'FORCE_FETCH_PROGRESS' });
-                }
-
             } catch (err) {
-                console.error("Error during re-cache:", err);
+                console.error('Error during re-cache:', err);
+                setPhase('dl-phase-clear', 'error', 'Failed', 'error');
                 clearInterval(tipInterval);
-                window.location.reload();
+                setTimeout(() => { window.location.reload(); }, 1500);
             }
         }
 
@@ -2654,31 +2779,31 @@
         if ('serviceWorker' in navigator) {
             const SW_VERSION_KEY = 'PRISM_SW_VERSION';
             const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
-    
+
             fetch('/sw.js', { cache: 'no-store' })
                 .then(res => res.text())
                 .then(text => {
                     const match = text.match(/const CACHE_NAME\s*=\s*['"](.+?)['"]/);
                     if (!match) return;
-    
+
                     const liveVersion = match[1];
                     const savedVersion = localStorage.getItem(SW_VERSION_KEY);
-    
+
                     if (savedVersion !== liveVersion) {
                         if (isStandalone) {
                             const ok = confirm(`Prism Update\n\nNew version detected: ${liveVersion}\n\nDo you want to update now?\n\nClick OK to proceed\nClick Cancel to do nothing`);
                             if (ok) {
                                 localStorage.setItem(SW_VERSION_KEY, liveVersion);
-                                clearAndRecache();
+                                clearAndRecache('prism');
                             } else {
                                 if (typeof fireUpdateNotif === 'function') fireUpdateNotif('prism_update_pending');
                             }
                         } else {
                             localStorage.setItem(SW_VERSION_KEY, liveVersion);
-                            navigator.serviceWorker.register(`/sw.js?standalone=${isStandalone}`);
+                            navigator.serviceWorker.register(`/sw.js?standalone=${isStandalone}&cacheMode=prism`);
                         }
                     } else {
-                        navigator.serviceWorker.register(`/sw.js?standalone=${isStandalone}`);
+                        navigator.serviceWorker.register(`/sw.js?standalone=${isStandalone}&cacheMode=prism`);
                     }
                 });
         }

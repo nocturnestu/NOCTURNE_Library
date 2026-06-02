@@ -1,4 +1,4 @@
-const CACHE_NAME = 'PRISM-v26.10.1';
+const CACHE_NAME = 'PRISM-v26.10.2';
 
 const PRECACHE_URLS = [
     '/',
@@ -80,7 +80,7 @@ self.addEventListener('install', e => {
 
     const params = new URLSearchParams(self.location.search);
     const isStandalone = params.get('standalone') === 'true';
-    const cacheMode = params.get('cacheMode') || 'full';
+    const cacheMode = params.get('cacheMode') || 'prism';
     const urlsToCache = cacheMode === 'prism' ? PRISM_ONLY_URLS : PRECACHE_URLS;
 
     e.waitUntil(

@@ -4435,11 +4435,7 @@
                                     }
                                 };
 
-                                if (document.readyState === 'complete') {
-                                    hideLoader();
-                                } else {
-                                    window.addEventListener('load', hideLoader);
-                                }
+                                hideLoader();
                             });
 
                             const fpsDiv = document.getElementById("fps-render");

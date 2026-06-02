@@ -2339,6 +2339,8 @@
                     navigator.serviceWorker.removeEventListener('message', _cacheProgressHandler);
                 }
 
+                let freshVersion = null;
+
                 _cacheProgressHandler = (event) => {
                     if (!event.data || event.data.type !== 'CACHE_PROGRESS') return;
                     const progress = event.data.progress || 0;
@@ -2357,6 +2359,9 @@
                         dlTitle.textContent = 'COMPLETE';
                         dlSub.textContent = 'Reloading...';
                         clearInterval(tipInterval);
+                        if (freshVersion) {
+                            localStorage.setItem('PRISM_SW_VERSION', freshVersion);
+                        }
                         setTimeout(() => { window.location.reload(); }, 600);
                     }
                 };
@@ -2370,10 +2375,7 @@
                     const swText = await swRes.text();
                     const vMatch = swText.match(/const CACHE_NAME\s*=\s*['"](.+?)['"]/);
                     if (vMatch) {
-                        const freshVersion = vMatch[1];
-                        if (freshVersion !== localStorage.getItem('PRISM_SW_VERSION')) {
-                            localStorage.setItem('PRISM_SW_VERSION', freshVersion);
-                        }
+                        freshVersion = vMatch[1];
                     }
                 } catch (_) { }
 

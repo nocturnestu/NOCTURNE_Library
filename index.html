@@ -2181,7 +2181,7 @@
         }
 
         function confirmAndRecache(mode) {
-            const label = mode === 'prism' ? 'Prism Only (core launcher assets)' : 'Full Download (all assets including SandBox3D)';
+            const label = mode === 'prism' ? 'Prism Only (core launcher assets)' : 'Full Download (all assets)';
             if (!confirm(`Cache Mode: ${label}\n\nThis will purge current assets and re-download the selected set.\n\nClick OK to proceed\nClick Cancel to do nothing`)) return;
             closeCacheModePicker();
             clearAndRecache(mode);

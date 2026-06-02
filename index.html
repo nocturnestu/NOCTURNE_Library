@@ -1367,6 +1367,75 @@
             transform: translateY(0);
         }
 
+        #cache-mode-page {
+            position: fixed;
+            inset: 0;
+            background: var(--bg);
+            z-index: 8000;
+            padding: 28px 20px 40px;
+            display: none;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        #cache-mode-page.open {
+            display: flex;
+        }
+
+        .cache-mode-card {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: var(--surface-0);
+            border: 1px solid var(--border);
+            border-radius: var(--r-lg);
+            padding: 18px 20px;
+            cursor: pointer;
+            transition: transform 0.25s var(--spring), background 0.2s ease, border-color 0.2s ease;
+            backdrop-filter: var(--blur-sm);
+            user-select: none;
+        }
+
+        .cache-mode-card:hover {
+            background: var(--surface-hover);
+            border-color: var(--border-strong);
+            transform: translateY(-2px);
+        }
+
+        .cache-mode-card:active {
+            transform: scale(0.98);
+        }
+
+        .cache-mode-icon-wrap {
+            width: 46px;
+            height: 46px;
+            border-radius: 14px;
+            border: 1px solid;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .cache-mode-body {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .cache-mode-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+
+        .cache-mode-sub {
+            font-size: 12.5px;
+            color: var(--text-sub);
+            line-height: 1.5;
+        }
+
         #gif-custom-url-wrap {
             display: none;
             margin-top: 10px;
@@ -1416,21 +1485,14 @@
         }
 
         .shaman-socials-bar {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: var(--surface-0);
-            border: 1px solid var(--border);
-            padding: 8px;
-            border-radius: var(--r-md);
-            backdrop-filter: var(--blur-sm);
-            -webkit-backdrop-filter: var(--blur-sm);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-            z-index: 200;
-            transition: transform 0.3s var(--spring), opacity 0.3s var(--ease-out);
+            position: fixed !important;
+            bottom: 20px !important;
+            right: 20px !important;
+            top: auto !important;
+            left: auto !important;
+            transform: none !important;
+            margin: 0 !important;
+            z-index: 999 !important;
         }
 
         .shaman-social-item {
@@ -1461,10 +1523,8 @@
 
         @media (max-width: 599px) {
             .shaman-socials-bar {
-                bottom: 16px;
-                right: 16px;
-                padding: 6px;
-                gap: 4px;
+                bottom: 20px !important;
+                right: 20px !important;
             }
             .shaman-social-item {
                 width: 34px;
@@ -1477,7 +1537,7 @@
 
         @media (display-mode: standalone) {
             .shaman-socials-bar {
-                bottom: 140px;
+                bottom: 20px !important;
             }
         }
 
@@ -1770,7 +1830,7 @@
         <p style="font-size: 12px; color: var(--text-sub); margin-bottom: 12px;">Switch up the vibe for your Prism. Changes take effect instantly.</p>
         <div id="pwa-only-settings" style="display: none; margin-top: 24px;">
             <h3 style="font-family: 'Space Grotesk'; font-size: 16px; margin-bottom: 12px;">Storage</h3>
-            <button id="recache-btn" class="list-item" style="width: 100%; border: none; cursor: pointer;" onclick="clearAndRecache()">
+            <button id="recache-btn" class="list-item" style="width: 100%; border: none; cursor: pointer;" onclick="openCacheModePicker()">
                 <i class="material-icons-round item-icon">refresh</i>
                 <div class="item-content">
                     <div class="item-title">Refresh App Cache</div>
@@ -1878,6 +1938,38 @@
             <div class="loader-bar" id="download-bar"></div>
         </div>
         <div class="dl-tip-box" id="download-tip">Loading lab logs...</div>
+    </div>
+
+    <div id="cache-mode-page">
+        <div class="back-btn" onclick="closeCacheModePicker()">
+            <i class="material-icons-round">arrow_back</i> Back
+        </div>
+        <h1 style="font-family: 'Space Grotesk'; margin-bottom: 6px;">Cache Mode</h1>
+        <p style="font-size: 12px; color: var(--text-sub); margin-bottom: 28px;">Choose which assets to re-download. You can
+            always re-run this later from Settings.</p>
+    
+        <div class="cache-mode-card" onclick="confirmAndRecache('full')">
+            <div class="cache-mode-icon-wrap" style="background: var(--primary-dim); border-color: var(--border-accent);">
+                <i class="material-icons-round" style="color: var(--primary);">cloud_download</i>
+            </div>
+            <div class="cache-mode-body">
+                <div class="cache-mode-title">Full Download</div>
+                <div class="cache-mode-sub">All Prism assets that run the entire NOCTURNE Studios projects.</div>
+            </div>
+            <i class="material-icons-round" style="color: var(--text-muted); flex-shrink: 0;">chevron_right</i>
+        </div>
+    
+        <div class="cache-mode-card" onclick="confirmAndRecache('prism')" style="margin-top: 10px;">
+            <div class="cache-mode-icon-wrap"
+                style="background: var(--secondary-dim); border-color: rgba(167,139,250,0.22);">
+                <i class="material-icons-round" style="color: var(--secondary);">layers</i>
+            </div>
+            <div class="cache-mode-body">
+                <div class="cache-mode-title">Prism Only</div>
+                <div class="cache-mode-sub">Core launcher assets only. Skips non-essential assets.</div>
+            </div>
+            <i class="material-icons-round" style="color: var(--text-muted); flex-shrink: 0;">chevron_right</i>
+        </div>
     </div>
 
     <script>
@@ -1992,14 +2084,27 @@
             }
         })();
 
+
+        function openCacheModePicker() {
+            document.getElementById('cache-mode-page').classList.add('open');
+        }
+
+        function closeCacheModePicker() {
+            document.getElementById('cache-mode-page').classList.remove('open');
+        }
+
+        function confirmAndRecache(mode) {
+            const label = mode === 'prism' ? 'Prism Only (core launcher assets)' : 'Full Download (all assets including SandBox3D)';
+            if (!confirm(`Cache Mode: ${label}\n\nThis will purge current assets and re-download the selected set.\n\nClick OK to proceed\nClick Cancel to do nothing`)) return;
+            closeCacheModePicker();
+            clearAndRecache(mode);
+        }
+
         let _cacheProgressHandler = null;
 
-        async function clearAndRecache() {
+        async function clearAndRecache(mode = 'full') {
             if (!navigator.onLine) return;
             const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
-            if (!confirm("You are about to purge current assets and redownload them to the latest version.\n\nDo you want to proceed?\n\nClick OK to proceed\nClick Cancel to do nothing")) {
-                return;
-            }
 
             const dlPage = document.getElementById('download-page');
             const dlBar = document.getElementById('download-bar');
@@ -2017,8 +2122,8 @@
                 "The work that she has done over the centuries is truly immense.",
                 "If she were to ever make a return to the stage, I should personally attend the performance and give her my heartfelt applause... Yes, I must do so when the opportunity arises.",
                 "I have a great many names, though when on leave… I tend to go by Zhongli.",
-                "The skies here are full of stars, but they aren’t the same as the ones back home.",
-                "As long as there’s a dedicated laboratory, I am more than satisfied.",
+                "The skies here are full of stars, but they aren't the same as the ones back home.",
+                "As long as there's a dedicated laboratory, I am more than satisfied.",
                 "Inazuma shines eternal, and you shall stand by my side.",
                 "Witness the divine power of the Shogun!",
                 "The strength of the one I protect is the sword of justice.",
@@ -2029,7 +2134,7 @@
                 "Justice must be served, no matter what it takes. I have made peace with that.",
                 "Even the stars above will fall from the sky if threatened. That is the law.",
                 "I must go, my people need me. The Law must be upheld.",
-                "Why do people insist on proving that their existence is more valuable than another’s? Isn’t simply existing enough?",
+                "Why do people insist on proving that their existence is more valuable than another's? Isn't simply existing enough?",
                 "There will always be those who dare to brave the lightning's glow.",
                 "Don't waste time trying to explain yourself to people who are committed to misunderstanding you.",
                 "Heh, the weather here is quite calm... No, wait, this is a new type of storm?",
@@ -2041,11 +2146,10 @@
                 "I trust in the protection of the stars.",
                 "No one fights alone.",
                 "Your strength shall be recorded in the history books, and every leaf and branch will bear witness.",
-                "The road ahead is long and uncertain, but I’m willing to take the first step.",
+                "The road ahead is long and uncertain, but I'm willing to take the first step.",
                 "The rule of the world is equality.",
                 "It's not the storm that makes a man brave, but the courage to face it.",
                 "My past is full of regrets, but the future is still ahead of me.",
-                "The skies here are full of stars, but they aren't the same as the ones back home.",
                 "Home is wherever we are together.",
                 "Slay!",
                 "The strongest oath is the one that binds one's own heart.",
@@ -2115,15 +2219,13 @@
                         dlBar.style.width = progress + '%';
                         if (progress >= 100) {
                             clearInterval(tipInterval);
-                            setTimeout(() => {
-                                window.location.reload();
-                            }, 500);
+                            setTimeout(() => { window.location.reload(); }, 500);
                         }
                     }
                 };
                 navigator.serviceWorker.addEventListener('message', _cacheProgressHandler);
 
-                const swUrl = `/sw.js?update=${Date.now()}&standalone=${isStandalone}`;
+                const swUrl = `/sw.js?update=${Date.now()}&standalone=${isStandalone}&cacheMode=${mode}`;
                 const reg = await navigator.serviceWorker.register(swUrl);
 
                 try {

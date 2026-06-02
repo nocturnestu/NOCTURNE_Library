@@ -1,4 +1,4 @@
-const CACHE_NAME = 'PRISM-v26.10.3';
+const CACHE_NAME = 'PRISM-v26.10.4';
 
 const PRECACHE_URLS = [
     '/',

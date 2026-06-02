@@ -2354,6 +2354,7 @@
                     }
 
                     if (progress >= 100) {
+                        navigator.serviceWorker.removeEventListener('message', _cacheProgressHandler);
                         setPhase('dl-phase-download', 'done', 'Done', 'check_circle');
                         setPhase('dl-phase-cache', 'done', 'Done', 'check_circle');
                         dlTitle.textContent = 'COMPLETE';
@@ -2619,6 +2620,10 @@
             var barWrap = document.getElementById('loader-bar-wrap');
             var bar = document.getElementById('loader-bar');
             var page = document.getElementById('page');
+
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/sw.js?cacheMode=prism');
+            }
 
             setTimeout(function () { ring.classList.add('show'); }, 250);
             setTimeout(function () { wordmark.classList.add('show'); }, 750);

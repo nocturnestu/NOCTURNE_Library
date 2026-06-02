@@ -1652,7 +1652,7 @@
                     <img src="https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/nocturneassets/logo2.png" alt="..." class="topbar-logo">
                     <span class="topbar-name">PRISM</span>
                 </a>
-                <div class="topbar-badge">Labs</div>
+                <div class="topbar-badge">Main</div>
             </div>
 
             <div class="hero-card">
@@ -1805,8 +1805,7 @@
             <div class="library-header-wrap">
                 <h2 class="library-title">Games</h2>
             </div>
-            <p style="font-size: 13px; color: var(--text-sub); margin-bottom: 8px;">Interactive 3D labs and deployment tests
-                built internally.</p>
+            <p style="font-size: 13px; color: var(--text-sub); margin-bottom: 8px;">Interactive HTML projects, either 2D, 3D, etc.</p>
     
             <div class="library-grid">
                 <a href="./SandBox3D/sb3d_page" class="list-item" onclick="createRipple(event)">
@@ -2047,7 +2046,7 @@
             </div>
             <div class="cache-mode-body">
                 <div class="cache-mode-title">Full Download</div>
-                <div class="cache-mode-sub">All Prism assets that run the entire NOCTURNE Studios projects.</div>
+                <div class="cache-mode-sub">Downloads all Prism/NOCTURNE project assets.</div>
             </div>
             <i class="material-icons-round" style="color: var(--text-muted); flex-shrink: 0;">chevron_right</i>
         </div>
@@ -2059,7 +2058,7 @@
             </div>
             <div class="cache-mode-body">
                 <div class="cache-mode-title">Prism Only</div>
-                <div class="cache-mode-sub">Core launcher assets only. Skips non-essential assets.</div>
+                <div class="cache-mode-sub">Selected assets only. Bare-minimum option to run NOCTURNE projects.</div>
             </div>
             <i class="material-icons-round" style="color: var(--text-muted); flex-shrink: 0;">chevron_right</i>
         </div>
@@ -2363,7 +2362,7 @@
                         if (freshVersion) {
                             localStorage.setItem('PRISM_SW_VERSION', freshVersion);
                         }
-                        setTimeout(() => { window.location.reload(); }, 600);
+                        setTimeout(() => { window.location.reload(); }, 1000);
                     }
                 };
                 navigator.serviceWorker.addEventListener('message', _cacheProgressHandler);

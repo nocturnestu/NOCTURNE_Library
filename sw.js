@@ -1,4 +1,4 @@
-const CACHE_NAME = 'PRISM-v26.12';
+const CACHE_NAME = 'PRISM-v26.12.1';
 
 const PRISM_ONLY_URLS = [
     '/',
@@ -55,10 +55,6 @@ const FULL_URLS = [
     'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/midnight/mid2.mp3',
     'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/midnight/mid3.mp3',
     'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/midnight/mid4.mp3',
-    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/sb3duianim_mobile.js',
-    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/sb3duianim_pc.js',
-    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/sb3dmatyou.js',
-    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/sb3dammo.js',
     'https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Space+Grotesk:wght@300;400;500;600;700&display=swap',
     'https://fonts.googleapis.com/icon?family=Material+Icons+Round',
     'https://cdnjs.cloudflare.com/ajax/libs/phaser/3.60.0/phaser.min.js',
@@ -81,6 +77,52 @@ const FULL_URLS = [
     './Other/mathlol'
 ];
 
+function getDB() {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open('NOCTURNE_Studios_DB', 1);
+        request.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains('dynamic-cache')) {
+                db.createObjectStore('dynamic-cache');
+            }
+        };
+        request.onsuccess = (e) => {
+            const db = e.target.result;
+            db.onversionchange = () => db.close();
+            resolve(db);
+        };
+        request.onerror = (e) => reject(e.target.error);
+    });
+}
+
+function getIDBData(key) {
+    return getDB().then(db => new Promise((resolve, reject) => {
+        const store = db.transaction('dynamic-cache', 'readonly').objectStore('dynamic-cache');
+        const req = store.get(key);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+    }));
+}
+
+function setIDBData(key, value) {
+    return getDB().then(db => new Promise((resolve, reject) => {
+        const store = db.transaction('dynamic-cache', 'readwrite').objectStore('dynamic-cache');
+        const req = store.put(value, key);
+        req.onsuccess = () => resolve();
+        req.onerror = () => reject(req.error);
+    }));
+}
+
+function deleteIDBData(key) {
+    return getDB().then(db => new Promise((resolve, reject) => {
+        const store = db.transaction('dynamic-cache', 'readwrite').objectStore('dynamic-cache');
+        const req = store.delete(key);
+        req.onsuccess = () => resolve();
+        req.onerror = () => reject(req.error);
+    }));
+}
+
+
 self.addEventListener('install', e => {
     self.skipWaiting();
 
@@ -98,9 +140,9 @@ self.addEventListener('install', e => {
             async function broadcastProgress() {
                 processedAssets++;
                 const progress = Math.round((processedAssets / totalAssets) * 100);
-                const clientsList = await self.clients.matchAll({ includeUncontrolled: true, type: 'window' });
-                for (const client of clientsList) {
-                    client.postMessage({ type: 'CACHE_PROGRESS', progress: progress });
+                const clients = await self.clients.matchAll({ includeUncontrolled: true, type: 'window' });
+                for (const client of clients) {
+                    client.postMessage({ type: 'CACHE_PROGRESS', progress });
                 }
             }
 
@@ -109,80 +151,83 @@ self.addEventListener('install', e => {
                 visited.add(url);
 
                 try {
-                    const cached = await caches.match(url);
-                    if (cached) {
+                    const already = await caches.match(url);
+                    if (already) {
                         if (isTopLevel) await broadcastProgress();
                         return;
                     }
 
                     const response = await fetch(url);
-                    if (response.status !== 200) {
-                        console.warn("Skipping non-200 asset:", url, response.status);
+                    if (!response.ok) {
+                        console.warn('[PRISM] Skipping non-OK:', url, response.status);
                         if (isTopLevel) await broadcastProgress();
                         return;
                     }
 
                     const contentType = response.headers.get('content-type') || '';
-                    const text = await response.text();
+                    const isBinary = /image|audio|video|font|woff|ttf|otf|eot/.test(contentType);
 
-                    const cacheResponse = new Response(text, {
-                        status: 200,
-                        headers: { 'Content-Type': contentType || 'application/octet-stream' }
-                    });
-                    await cache.put(url, cacheResponse);
+                    let blobForIDB;
 
-                    if (isStandalone) {
+                    if (isBinary) {
+                        const blob = await response.blob();
+                        blobForIDB = blob;
+                        await cache.put(url, new Response(blob.slice(0), {
+                            status: 200,
+                            headers: { 'Content-Type': contentType }
+                        }));
+                    } else {
+                        const text = await response.text();
+                        blobForIDB = new Blob([text], { type: contentType });
+                        await cache.put(url, new Response(text, {
+                            status: 200,
+                            headers: { 'Content-Type': contentType }
+                        }));
+
+                        const nestedUrls = [];
+
+                        if (contentType.includes('text/css')) {
+                            const urlMatches = [...text.matchAll(/url\(\s*['"]?([^'"\)]+)['"]?\s*\)/g)].map(m => m[1]);
+                            const importMatches = [...text.matchAll(/@import\s+['"]([^'"]+)['"]/g)].map(m => m[1]);
+                            nestedUrls.push(...urlMatches, ...importMatches);
+                        }
+
+                        if (contentType.includes('javascript')) {
+                            const jsMatches = [...text.matchAll(/['"`](https?:\/\/[^'"`\s]{4,})['"`]/g)].map(m => m[1]);
+                            nestedUrls.push(...jsMatches);
+                        }
+
+                        const resolved = nestedUrls
+                            .map(u => { try { return new URL(u, url).href; } catch { return null; } })
+                            .filter(u => u && !u.startsWith('data:') && !visited.has(u));
+
+                        await Promise.all(resolved.map(u => deepCache(u, false)));
+                    }
+
+                    if (isStandalone && blobForIDB) {
                         try {
-                            const blob = new Blob([text], { type: contentType });
-                            await setIDBData(url, { blob, type: contentType });
+                            await setIDBData(url, { blob: blobForIDB, type: contentType });
                         } catch (idbErr) {
-                            console.error("IDB write failed:", url, idbErr);
+                            console.error('[PRISM] IDB write failed:', url, idbErr);
                             await deleteIDBData(url).catch(() => { });
                         }
                     }
 
-                    const nestedUrls = [];
-
-                    if (contentType.includes('text/css')) {
-                        const urlMatches = [...text.matchAll(/url\(\s*['"]?([^'"\)]+)['"]?\s*\)/g)].map(m => m[1]);
-                        const importMatches = [...text.matchAll(/@import\s+['"]([^'"]+)['"]/g)].map(m => m[1]);
-                        nestedUrls.push(...urlMatches, ...importMatches);
-                    }
-
-                    if (contentType.includes('javascript')) {
-                        const jsMatches = [...text.matchAll(/['"`](https?:\/\/[^'"`\s]{4,})['"`]/g)].map(m => m[1]);
-                        nestedUrls.push(...jsMatches);
-                    }
-
-                    const resolvedNested = nestedUrls
-                        .map(u => {
-                            try { return new URL(u, url).href; } catch { return null; }
-                        })
-                        .filter(u =>
-                            u &&
-                            !u.includes('data:') &&
-                            !visited.has(u)
-                        );
-
-                    await Promise.all(resolvedNested.map(u => deepCache(u, false)));
-
                 } catch (err) {
-                    console.error("Deep cache error for:", url, err);
+                    console.error('[PRISM] deepCache error:', url, err);
                     await deleteIDBData(url).catch(() => { });
                 } finally {
                     if (isTopLevel) await broadcastProgress();
                 }
             }
 
-            const downloadTasks = urlsToCache.map(async (url) => {
-                const absoluteUrl = new URL(url, self.location.origin).href;
-                await deepCache(absoluteUrl, true);
-            });
-
-            await Promise.all(downloadTasks);
+            await Promise.all(
+                urlsToCache.map(url => deepCache(new URL(url, self.location.origin).href, true))
+            );
         })
     );
 });
+
 
 self.addEventListener('activate', e => {
     e.waitUntil(
@@ -193,100 +238,14 @@ self.addEventListener('activate', e => {
     self.clients.claim();
 });
 
-function getDB() {
-    return new Promise((resolve, reject) => {
-        const request = indexedDB.open('NOCTURNE_Studios_DB', 1);
-        request.onupgradeneeded = (e) => {
-            const db = e.target.result;
-            if (!db.objectStoreNames.contains('dynamic-cache')) {
-                db.createObjectStore('dynamic-cache');
-            }
-        };
-        request.onsuccess = (e) => {
-            const db = e.target.result;
-            db.onversionchange = () => {
-                db.close();
-            };
-            resolve(db);
-        };
-        request.onerror = (e) => reject(e.target.error);
-    });
-}
-
-function getIDBData(key) {
-    return getDB().then(db => {
-        return new Promise((resolve, reject) => {
-            const transaction = db.transaction('dynamic-cache', 'readonly');
-            const store = transaction.objectStore('dynamic-cache');
-            const request = store.get(key);
-            request.onsuccess = () => resolve(request.result);
-            request.onerror = () => reject(request.error);
-        });
-    });
-}
-
-function setIDBData(key, value) {
-    return getDB().then(db => {
-        return new Promise((resolve, reject) => {
-            const transaction = db.transaction('dynamic-cache', 'readwrite');
-            const store = transaction.objectStore('dynamic-cache');
-            const request = store.put(value, key);
-            request.onsuccess = () => resolve();
-            request.onerror = () => reject(request.error);
-        });
-    });
-}
-
-function deleteIDBData(key) {
-    return getDB().then(db => {
-        return new Promise((resolve, reject) => {
-            const transaction = db.transaction('dynamic-cache', 'readwrite');
-            const store = transaction.objectStore('dynamic-cache');
-            const request = store.delete(key);
-            request.onsuccess = () => resolve();
-            request.onerror = () => reject(request.error);
-        });
-    });
-}
 
 self.addEventListener('fetch', e => {
     const url = e.request.url;
 
-    if (url.includes('/sw.js')) {
-        e.respondWith(fetch(e.request));
-        return;
-    }
-
     if (e.request.method !== 'GET' || url.startsWith('chrome-extension://')) return;
 
-    if (url.endsWith('.mp3') || url.endsWith('.mp4')) {
-        e.respondWith(
-            caches.match(e.request).then(cacheMatch => {
-                if (cacheMatch) return cacheMatch;
-
-                const params = new URLSearchParams(self.location.search);
-                const isStandalone = params.get('standalone') === 'true';
-
-                if (isStandalone) {
-                    return getIDBData(url).then(idbData => {
-                        if (idbData && idbData.blob) {
-                            return new Response(idbData.blob, {
-                                headers: { 'Content-Type': url.endsWith('.mp4') ? 'video/mp4' : 'audio/mpeg' }
-                            });
-                        }
-                        throw new Error('Not in IDB');
-                    }).catch(() => new Response(new Blob([]), {
-                        status: 200,
-                        headers: { 'Content-Type': url.endsWith('.mp4') ? 'video/mp4' : 'audio/mpeg' }
-                    }));
-                }
-
-                return new Response(new Blob([]), {
-                    status: 200,
-                    headers: { 'Content-Type': url.endsWith('.mp4') ? 'video/mp4' : 'audio/mpeg' }
-                });
-            })
-        );
+    if (url.includes('/sw.js')) {
+        e.respondWith(fetch(e.request));
         return;
     }
 
@@ -295,23 +254,53 @@ self.addEventListener('fetch', e => {
         return;
     }
 
+    if (url.endsWith('.mp3') || url.endsWith('.mp4')) {
+        e.respondWith((async () => {
+            const cached = await caches.match(e.request);
+            if (cached) return cached;
+
+            const params = new URLSearchParams(self.location.search);
+            if (params.get('standalone') === 'true') {
+                try {
+                    const idbData = await getIDBData(url);
+                    if (idbData?.blob) {
+                        return new Response(idbData.blob, {
+                            headers: { 'Content-Type': url.endsWith('.mp4') ? 'video/mp4' : 'audio/mpeg' }
+                        });
+                    }
+                } catch (_) { }
+            }
+
+            return new Response(new Blob([]), {
+                status: 200,
+                headers: { 'Content-Type': url.endsWith('.mp4') ? 'video/mp4' : 'audio/mpeg' }
+            });
+        })());
+        return;
+    }
+
     if (url.startsWith('https://fonts.gstatic.com') || url.startsWith('https://fonts.googleapis.com')) {
-        e.respondWith(
-            caches.match(e.request).then(cached => {
-                if (cached) return cached;
-                return fetch(e.request).then(response => {
-                    const clone = response.clone();
-                    caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
-                    return response;
-                });
-            })
-        );
+        e.respondWith((async () => {
+            const cached = await caches.match(e.request);
+            if (cached) return cached;
+
+            try {
+                const response = await fetch(e.request);
+                if (response.ok) {
+                    const cache = await caches.open(CACHE_NAME);
+                    cache.put(e.request, response.clone());
+                }
+                return response;
+            } catch (_) {
+                return new Response('', { status: 503 });
+            }
+        })());
         return;
     }
 
     e.respondWith((async () => {
-        const cacheMatch = await caches.match(e.request);
-        if (cacheMatch) return cacheMatch;
+        const cached = await caches.match(e.request);
+        if (cached) return cached;
 
         const params = new URLSearchParams(self.location.search);
         const isStandalone = params.get('standalone') === 'true';
@@ -319,27 +308,35 @@ self.addEventListener('fetch', e => {
         if (isStandalone) {
             try {
                 const idbData = await getIDBData(url);
-                if (idbData) {
-                    if (idbData.blob) {
-                        return new Response(idbData.blob, {
-                            headers: { 'Content-Type': idbData.type || 'application/octet-stream' }
-                        });
-                    }
-                    return new Response(JSON.stringify(idbData), {
-                        headers: { 'Content-Type': 'application/json' }
+                if (idbData?.blob) {
+                    return new Response(idbData.blob, {
+                        headers: { 'Content-Type': idbData.type || 'application/octet-stream' }
                     });
                 }
             } catch (_) { }
         }
 
-        const clientsList = await self.clients.matchAll({ includeUncontrolled: true, type: 'window' });
-        for (const client of clientsList) {
-            client.postMessage({ type: 'MISSING_ASSET', url: url });
-        }
+        try {
+            const response = await fetch(e.request);
+            if (response.ok) {
+                const cache = await caches.open(CACHE_NAME);
+                cache.put(e.request, response.clone());
 
-        return new Response('Asset not found in cache. Network grab denied.', {
-            status: 404,
-            statusText: 'Strict Cache-Only Enforced'
-        });
+                if (isStandalone) {
+                    try {
+                        const blob = await response.clone().blob();
+                        const contentType = response.headers.get('content-type') || '';
+                        await setIDBData(url, { blob, type: contentType });
+                    } catch (_) { }
+                }
+            }
+            return response;
+        } catch (_) {
+            const clients = await self.clients.matchAll({ includeUncontrolled: true, type: 'window' });
+            for (const client of clients) {
+                client.postMessage({ type: 'MISSING_ASSET', url });
+            }
+            return new Response('Asset unavailable offline.', { status: 503, statusText: 'Offline' });
+        }
     })());
 });

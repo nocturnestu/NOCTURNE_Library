@@ -268,6 +268,11 @@ function deleteIDBData(key) {
 self.addEventListener('fetch', e => {
     const url = e.request.url;
 
+    if (url.includes('/sw.js')) {
+        e.respondWith(fetch(e.request));
+        return;
+    }
+
     if (e.request.method !== 'GET' || url.startsWith('chrome-extension://')) return;
 
     const params = new URLSearchParams(self.location.search);
@@ -295,10 +300,6 @@ self.addEventListener('fetch', e => {
 
         if (url.includes('giphy.com')) {
             return fetch(e.request).catch(() => new Response('', { status: 404 }));
-        }
-
-        if (url.includes('/sw.js') || url.endsWith('sw.js')) {
-            return;
         }
 
         if (url.endsWith('.mp3') || url.endsWith('.mp4')) {

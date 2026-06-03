@@ -145,38 +145,6 @@ self.addEventListener('install', e => {
             });
 
             await Promise.all(downloadTasks);
-
-            const fontCssUrls = urlsToCache.filter(u => u.includes('fonts.googleapis.com'));
-            if (fontCssUrls.length > 0) {
-                await Promise.all(fontCssUrls.map(async (cssUrl) => {
-                    try {
-                        const res = await fetch(new URL(cssUrl, self.location.origin).href, {
-                            headers: { 'Accept': 'text/css' }
-                        });
-                        if (!res.ok) return;
-
-                        const cssText = await res.text();
-                        const woff2Urls = [...cssText.matchAll(/url\((https:\/\/fonts\.gstatic\.com\/[^)]+)\)/g)]
-                            .map(m => m[1]);
-
-                        await Promise.all(woff2Urls.map(async (woff2Url) => {
-                            try {
-                                const cached = await caches.match(woff2Url);
-                                if (cached) return;
-
-                                const fontRes = await fetch(woff2Url);
-                                if (!fontRes.ok) return;
-
-                                await cache.put(woff2Url, fontRes.clone());
-                            } catch (err) {
-                                console.error('gstatic font fetch failed:', woff2Url, err);
-                            }
-                        }));
-                    } catch (err) {
-                        console.error('Font CSS fetch failed:', cssUrl, err);
-                    }
-                }));
-            }
         })
     );
 });
@@ -249,6 +217,16 @@ function deleteIDBData(key) {
 self.addEventListener('fetch', e => {
     const url = e.request.url;
 
+    if (url.endsWith('.mp3') || url.endsWith('.mp4')) {
+        e.respondWith(
+            fetch(e.request).catch(() => new Response(new Blob([]), {
+                status: 200,
+                headers: { 'Content-Type': url.endsWith('.mp4') ? 'video/mp4' : 'audio/mpeg' }
+            }))
+        );
+        return;
+    }
+
     if (e.request.method !== 'GET' || url.startsWith('chrome-extension://')) return;
 
     const params = new URLSearchParams(self.location.search);
@@ -271,23 +249,17 @@ self.addEventListener('fetch', e => {
                         headers: { 'Content-Type': 'application/json' }
                     });
                 }
-            } catch (_) {}
+            } catch (_) { }
         }
 
-        if (url.endsWith('.mp3') || url.endsWith('.mp4')) {
-            return new Response(new Blob([]), {
-                status: 200,
-                headers: { 'Content-Type': url.endsWith('.mp4') ? 'video/mp4' : 'audio/mpeg' }
-            });
-        }
-
-        if (url.includes('/api/settings') || url.includes('/userdata/')) {
-            return new Response(JSON.stringify({ error: 'Offline Mode Enforced' }), {
-                status: 503,
-                headers: { 'Content-Type': 'application/json' }
-            });
-        }
-
-        return new Response('', { status: 404 });
+        return fetch(e.request).catch(() => {
+            if (url.includes('/api/settings') || url.includes('/userdata/')) {
+                return new Response(JSON.stringify({ error: 'Offline' }), {
+                    status: 503,
+                    headers: { 'Content-Type': 'application/json' }
+                });
+            }
+            return new Response('', { status: 404 });
+        });
     })());
 });

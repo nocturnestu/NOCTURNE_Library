@@ -1,4 +1,4 @@
-const CACHE_NAME = 'PRISM-v26.10.6';
+const CACHE_NAME = 'PRISM-v26.11';
 
 const PRISM_ONLY_URLS = [
     '/',
@@ -92,14 +92,32 @@ self.addEventListener('install', e => {
     e.waitUntil(
         caches.open(CACHE_NAME).then(async (cache) => {
             let processedAssets = 0;
-            const totalAssets = urlsToCache.length;
+            const dynamicFonts = new Set();
+            let totalAssets = urlsToCache.length;
 
             async function broadcastProgress() {
                 processedAssets++;
                 const progress = Math.round((processedAssets / totalAssets) * 100);
                 const clientsList = await self.clients.matchAll({ includeUncontrolled: true, type: 'window' });
                 for (const client of clientsList) {
-                    client.postMessage({ type: 'CACHE_PROGRESS', progress: progress });
+                    client.postMessage({ type: 'CACHE_PROGRESS', progress: Math.min(progress, 100) });
+                }
+            }
+
+            async function handleAssetCache(absoluteUrl, blobData, contentType) {
+                const cacheResponse = new Response(blobData.slice(0), {
+                    status: 200,
+                    headers: { 'Content-Type': contentType || 'application/octet-stream' }
+                });
+                await cache.put(absoluteUrl, cacheResponse);
+
+                if (isStandalone) {
+                    try {
+                        await setIDBData(absoluteUrl, { blob: blobData.slice(0), type: contentType });
+                    } catch (idbErr) {
+                        console.error("IDB write failed, cleaning up:", absoluteUrl, idbErr);
+                        await deleteIDBData(absoluteUrl).catch(() => { });
+                    }
                 }
             }
 
@@ -108,6 +126,10 @@ self.addEventListener('install', e => {
                 try {
                     const cached = await caches.match(absoluteUrl);
                     if (cached) {
+                        if (absoluteUrl.includes('fonts.googleapis.com')) {
+                            const text = await cached.text();
+                            await parseAndFetchFonts(text);
+                        }
                         await broadcastProgress();
                         return;
                     }
@@ -122,19 +144,11 @@ self.addEventListener('install', e => {
                     const blob = await response.blob();
                     const contentType = response.headers.get('content-type');
 
-                    const cacheResponse = new Response(blob.slice(0), {
-                        status: 200,
-                        headers: { 'Content-Type': contentType || 'application/octet-stream' }
-                    });
-                    await cache.put(absoluteUrl, cacheResponse);
+                    await handleAssetCache(absoluteUrl, blob, contentType);
 
-                    if (isStandalone) {
-                        try {
-                            await setIDBData(absoluteUrl, { blob: blob.slice(0), type: contentType });
-                        } catch (idbErr) {
-                            console.error("IDB write failed, cleaning up:", absoluteUrl, idbErr);
-                            await deleteIDBData(absoluteUrl).catch(() => { });
-                        }
+                    if (absoluteUrl.includes('fonts.googleapis.com')) {
+                        const text = await blob.text();
+                        await parseAndFetchFonts(text);
                     }
                 } catch (err) {
                     console.error("Precaching error for:", absoluteUrl, err);
@@ -143,6 +157,43 @@ self.addEventListener('install', e => {
                     await broadcastProgress();
                 }
             });
+
+            async function parseAndFetchFonts(cssText) {
+                const fontUrlRegex = /url\((https:\/\/fonts\.gstatic\.com\/[^)]+)\)/g;
+                let match;
+                const matches = [];
+
+                while ((match = fontUrlRegex.exec(cssText)) !== null) {
+                    const fontUrl = match[1];
+                    if (!dynamicFonts.has(fontUrl)) {
+                        dynamicFonts.add(fontUrl);
+                        matches.push(fontUrl);
+                    }
+                }
+
+                totalAssets += matches.length;
+
+                await Promise.all(matches.map(async (fontUrl) => {
+                    try {
+                        const cachedFont = await caches.match(fontUrl);
+                        if (cachedFont) {
+                            await broadcastProgress();
+                            return;
+                        }
+
+                        const fontResponse = await fetch(fontUrl);
+                        if (fontResponse.status === 200) {
+                            const fontBlob = await fontResponse.blob();
+                            const fontType = fontResponse.headers.get('content-type');
+                            await handleAssetCache(fontUrl, fontBlob, fontType);
+                        }
+                    } catch (err) {
+                        console.error("Dynamic font download failed:", fontUrl, err);
+                    } finally {
+                        await broadcastProgress();
+                    }
+                }));
+            }
 
             await Promise.all(downloadTasks);
         })
@@ -217,16 +268,6 @@ function deleteIDBData(key) {
 self.addEventListener('fetch', e => {
     const url = e.request.url;
 
-    if (url.endsWith('.mp3') || url.endsWith('.mp4')) {
-        e.respondWith(
-            fetch(e.request).catch(() => new Response(new Blob([]), {
-                status: 200,
-                headers: { 'Content-Type': url.endsWith('.mp4') ? 'video/mp4' : 'audio/mpeg' }
-            }))
-        );
-        return;
-    }
-
     if (e.request.method !== 'GET' || url.startsWith('chrome-extension://')) return;
 
     const params = new URLSearchParams(self.location.search);
@@ -252,14 +293,24 @@ self.addEventListener('fetch', e => {
             } catch (_) { }
         }
 
-        return fetch(e.request).catch(() => {
-            if (url.includes('/api/settings') || url.includes('/userdata/')) {
-                return new Response(JSON.stringify({ error: 'Offline' }), {
-                    status: 503,
-                    headers: { 'Content-Type': 'application/json' }
-                });
-            }
-            return new Response('', { status: 404 });
-        });
+        if (url.includes('giphy.com')) {
+            return fetch(e.request).catch(() => new Response('', { status: 404 }));
+        }
+
+        if (url.endsWith('.mp3') || url.endsWith('.mp4')) {
+            return new Response(new Blob([]), {
+                status: 200,
+                headers: { 'Content-Type': url.endsWith('.mp4') ? 'video/mp4' : 'audio/mpeg' }
+            });
+        }
+
+        if (url.includes('/api/settings') || url.includes('/userdata/')) {
+            return new Response(JSON.stringify({ error: 'Offline Mode Enforced' }), {
+                status: 503,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
+
+        return new Response('', { status: 404 });
     })());
 });

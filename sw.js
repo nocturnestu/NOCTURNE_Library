@@ -1,4 +1,4 @@
-const CACHE_NAME = 'PRISM-v26.10.6';
+const CACHE_NAME = 'PRISM-v26.11.1';
 
 const PRISM_ONLY_URLS = [
     '/',
@@ -17,6 +17,7 @@ const PRISM_ONLY_URLS = [
     'https://cdn.jsdelivr.net/npm/babylonjs-loaders@9.0.0/babylonjs.loaders.min.js',
     'https://cdn.jsdelivr.net/npm/babylonjs-inspector@9.0.0/babylon.inspector.bundle.js',
     'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
+    'https://assets.babylonjs.com/textures/flare.png',
     './SandBox3D/sb3d_page',
     './RiftRunners2D/rr2d_page',
     './RiftRunners2D/RiftRunners2D',
@@ -67,6 +68,7 @@ const FULL_URLS = [
     'https://cdn.jsdelivr.net/npm/babylonjs-loaders@9.0.0/babylonjs.loaders.min.js',
     'https://cdn.jsdelivr.net/npm/babylonjs-inspector@9.0.0/babylon.inspector.bundle.js',
     'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
+    'https://assets.babylonjs.com/textures/flare.png',
     './SandBox3D/sb3d_page',
     './RiftRunners2D/rr2d_page',
     './RiftRunners2D/RiftRunners2D',
@@ -215,12 +217,46 @@ function deleteIDBData(key) {
 self.addEventListener('fetch', e => {
     const url = e.request.url;
 
+    if (url.includes('/sw.js')) {
+        e.respondWith(fetch(e.request));
+        return;
+    }
+
+    if (event.request.url.startsWith('https://fonts.googleapis.com') ||
+        event.request.url.startsWith('https://fonts.gstatic.com')) {
+        event.respondWith(fetch(event.request));
+        return;
+    }
+
     if (url.endsWith('.mp3') || url.endsWith('.mp4')) {
         e.respondWith(
-            fetch(e.request).catch(() => new Response(new Blob([]), {
-                status: 200,
-                headers: { 'Content-Type': url.endsWith('.mp4') ? 'video/mp4' : 'audio/mpeg' }
-            }))
+            caches.match(e.request).then(cacheMatch => {
+                if (cacheMatch) return cacheMatch;
+
+                const params = new URLSearchParams(self.location.search);
+                const isStandalone = params.get('standalone') === 'true';
+
+                if (isStandalone) {
+                    return getIDBData(url).then(idbData => {
+                        if (idbData && idbData.blob) {
+                            return new Response(idbData.blob, {
+                                headers: { 'Content-Type': url.endsWith('.mp4') ? 'video/mp4' : 'audio/mpeg' }
+                            });
+                        }
+                        throw new Error('Not in IDB');
+                    }).catch(() => {
+                        return new Response(new Blob([]), {
+                            status: 200,
+                            headers: { 'Content-Type': url.endsWith('.mp4') ? 'video/mp4' : 'audio/mpeg' }
+                        });
+                    });
+                }
+
+                return new Response(new Blob([]), {
+                    status: 200,
+                    headers: { 'Content-Type': url.endsWith('.mp4') ? 'video/mp4' : 'audio/mpeg' }
+                });
+            })
         );
         return;
     }
@@ -250,14 +286,18 @@ self.addEventListener('fetch', e => {
             } catch (_) { }
         }
 
-        return fetch(e.request).catch(() => {
-            if (url.includes('/api/settings') || url.includes('/userdata/')) {
-                return new Response(JSON.stringify({ error: 'Offline' }), {
-                    status: 503,
-                    headers: { 'Content-Type': 'application/json' }
-                });
-            }
-            return new Response('', { status: 404 });
+        if (url.includes('giphy.com')) {
+            return fetch(e.request).catch(() => new Response('', { status: 404 }));
+        }
+
+        const clientsList = await self.clients.matchAll({ includeUncontrolled: true, type: 'window' });
+        for (const client of clientsList) {
+            client.postMessage({ type: 'MISSING_ASSET', url: url });
+        }
+
+        return new Response('Asset not found in cache. Network grab denied.', {
+            status: 404,
+            statusText: 'Strict Cache-Only Enforced'
         });
     })());
 });

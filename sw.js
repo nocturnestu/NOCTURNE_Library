@@ -1,4 +1,4 @@
-const CACHE_NAME = 'PRISM-v26.11.1';
+const CACHE_NAME = 'PRISM-v26.10.7';
 
 const PRISM_ONLY_URLS = [
     '/',
@@ -214,90 +214,82 @@ function deleteIDBData(key) {
     });
 }
 
+function isFontRequest(url) {
+    return url.includes('fonts.googleapis.com') || url.includes('fonts.gstatic.com');
+}
+
+function isGiphyRequest(url) {
+    return url.includes('giphy.com');
+}
+
+async function storeResponse(request, response) {
+    if (!response || response.status !== 200) return;
+    const url = request.url;
+    const cache = await caches.open(CACHE_NAME);
+    await cache.put(request, response.clone());
+    const blob = await response.blob();
+    const contentType = response.headers.get('content-type');
+    await setIDBData(url, { blob: blob.slice(0), type: contentType });
+}
+
 self.addEventListener('fetch', e => {
     const url = e.request.url;
 
-    if (url.includes('/sw.js')) {
-        e.respondWith(fetch(e.request));
-        return;
-    }
-
-    if (event.request.url.startsWith('https://fonts.googleapis.com') ||
-        event.request.url.startsWith('https://fonts.gstatic.com')) {
-        event.respondWith(fetch(event.request));
-        return;
-    }
-
     if (url.endsWith('.mp3') || url.endsWith('.mp4')) {
         e.respondWith(
-            caches.match(e.request).then(cacheMatch => {
-                if (cacheMatch) return cacheMatch;
-
-                const params = new URLSearchParams(self.location.search);
-                const isStandalone = params.get('standalone') === 'true';
-
-                if (isStandalone) {
-                    return getIDBData(url).then(idbData => {
-                        if (idbData && idbData.blob) {
-                            return new Response(idbData.blob, {
-                                headers: { 'Content-Type': url.endsWith('.mp4') ? 'video/mp4' : 'audio/mpeg' }
-                            });
-                        }
-                        throw new Error('Not in IDB');
-                    }).catch(() => {
-                        return new Response(new Blob([]), {
-                            status: 200,
-                            headers: { 'Content-Type': url.endsWith('.mp4') ? 'video/mp4' : 'audio/mpeg' }
-                        });
-                    });
-                }
-
-                return new Response(new Blob([]), {
-                    status: 200,
-                    headers: { 'Content-Type': url.endsWith('.mp4') ? 'video/mp4' : 'audio/mpeg' }
-                });
-            })
+            fetch(e.request).catch(() => new Response(new Blob([]), {
+                status: 200,
+                headers: { 'Content-Type': url.endsWith('.mp4') ? 'video/mp4' : 'audio/mpeg' }
+            }))
         );
         return;
     }
 
-    if (e.request.method !== 'GET' || url.startsWith('chrome-extension://')) return;
+    if (e.request.method !== 'GET') return;
+    if (url.startsWith('chrome-extension://')) return;
 
-    const params = new URLSearchParams(self.location.search);
-    const isStandalone = params.get('standalone') === 'true';
+    if (isFontRequest(url)) {
+        e.respondWith((async () => {
+            const idbData = await getIDBData(url).catch(() => null);
+            if (idbData && idbData.blob) {
+                return new Response(idbData.blob, {
+                    headers: { 'Content-Type': idbData.type || 'font/woff2' }
+                });
+            }
+            const cacheMatch = await caches.match(e.request);
+            if (cacheMatch) return cacheMatch;
+            try {
+                const networkResponse = await fetch(e.request);
+                if (networkResponse.status === 200) {
+                    await storeResponse(e.request, networkResponse.clone());
+                    return networkResponse;
+                }
+                return new Response('Font not available', { status: 404 });
+            } catch (err) {
+                return new Response('Network error for font', { status: 404 });
+            }
+        })());
+        return;
+    }
+
+    if (isGiphyRequest(url)) {
+        e.respondWith(
+            fetch(e.request).catch(() => new Response('GIF not available', { status: 404 }))
+        );
+        return;
+    }
 
     e.respondWith((async () => {
+        const idbData = await getIDBData(url).catch(() => null);
+        if (idbData && idbData.blob) {
+            return new Response(idbData.blob, {
+                headers: { 'Content-Type': idbData.type || 'application/octet-stream' }
+            });
+        }
+
         const cacheMatch = await caches.match(e.request);
         if (cacheMatch) return cacheMatch;
 
-        if (isStandalone) {
-            try {
-                const idbData = await getIDBData(url);
-                if (idbData) {
-                    if (idbData.blob) {
-                        return new Response(idbData.blob, {
-                            headers: { 'Content-Type': idbData.type || 'application/octet-stream' }
-                        });
-                    }
-                    return new Response(JSON.stringify(idbData), {
-                        headers: { 'Content-Type': 'application/json' }
-                    });
-                }
-            } catch (_) { }
-        }
-
-        if (url.includes('giphy.com')) {
-            return fetch(e.request).catch(() => new Response('', { status: 404 }));
-        }
-
-        const clientsList = await self.clients.matchAll({ includeUncontrolled: true, type: 'window' });
-        for (const client of clientsList) {
-            client.postMessage({ type: 'MISSING_ASSET', url: url });
-        }
-
-        return new Response('Asset not found in cache. Network grab denied.', {
-            status: 404,
-            statusText: 'Strict Cache-Only Enforced'
-        });
+        return new Response('Asset not found in offline storage', { status: 404, headers: { 'Content-Type': 'text/plain' } });
     })());
 });

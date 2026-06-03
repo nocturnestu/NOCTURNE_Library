@@ -1,4 +1,4 @@
-const CACHE_NAME = 'PRISM-v26.11.2';
+const CACHE_NAME = 'PRISM-v26.12';
 
 const PRISM_ONLY_URLS = [
     '/',
@@ -93,6 +93,7 @@ self.addEventListener('install', e => {
         caches.open(CACHE_NAME).then(async (cache) => {
             let processedAssets = 0;
             const totalAssets = urlsToCache.length;
+            const visited = new Set();
 
             async function broadcastProgress() {
                 processedAssets++;
@@ -103,45 +104,79 @@ self.addEventListener('install', e => {
                 }
             }
 
-            const downloadTasks = urlsToCache.map(async (url) => {
-                const absoluteUrl = new URL(url, self.location.origin).href;
+            async function deepCache(url, isTopLevel = false) {
+                if (visited.has(url)) return;
+                visited.add(url);
+
                 try {
-                    const cached = await caches.match(absoluteUrl);
+                    const cached = await caches.match(url);
                     if (cached) {
-                        await broadcastProgress();
+                        if (isTopLevel) await broadcastProgress();
                         return;
                     }
 
-                    const response = await fetch(absoluteUrl);
+                    const response = await fetch(url);
                     if (response.status !== 200) {
-                        console.warn("Skipping non-200 asset:", absoluteUrl, response.status);
-                        await broadcastProgress();
+                        console.warn("Skipping non-200 asset:", url, response.status);
+                        if (isTopLevel) await broadcastProgress();
                         return;
                     }
 
-                    const blob = await response.blob();
-                    const contentType = response.headers.get('content-type');
+                    const contentType = response.headers.get('content-type') || '';
+                    const text = await response.text();
 
-                    const cacheResponse = new Response(blob.slice(0), {
+                    const cacheResponse = new Response(text, {
                         status: 200,
                         headers: { 'Content-Type': contentType || 'application/octet-stream' }
                     });
-                    await cache.put(absoluteUrl, cacheResponse);
+                    await cache.put(url, cacheResponse);
 
                     if (isStandalone) {
                         try {
-                            await setIDBData(absoluteUrl, { blob: blob.slice(0), type: contentType });
+                            const blob = new Blob([text], { type: contentType });
+                            await setIDBData(url, { blob, type: contentType });
                         } catch (idbErr) {
-                            console.error("IDB write failed, cleaning up:", absoluteUrl, idbErr);
-                            await deleteIDBData(absoluteUrl).catch(() => { });
+                            console.error("IDB write failed:", url, idbErr);
+                            await deleteIDBData(url).catch(() => { });
                         }
                     }
+
+                    const nestedUrls = [];
+
+                    if (contentType.includes('text/css')) {
+                        const urlMatches = [...text.matchAll(/url\(\s*['"]?([^'"\)]+)['"]?\s*\)/g)].map(m => m[1]);
+                        const importMatches = [...text.matchAll(/@import\s+['"]([^'"]+)['"]/g)].map(m => m[1]);
+                        nestedUrls.push(...urlMatches, ...importMatches);
+                    }
+
+                    if (contentType.includes('javascript')) {
+                        const jsMatches = [...text.matchAll(/['"`](https?:\/\/[^'"`\s]{4,})['"`]/g)].map(m => m[1]);
+                        nestedUrls.push(...jsMatches);
+                    }
+
+                    const resolvedNested = nestedUrls
+                        .map(u => {
+                            try { return new URL(u, url).href; } catch { return null; }
+                        })
+                        .filter(u =>
+                            u &&
+                            !u.includes('data:') &&
+                            !visited.has(u)
+                        );
+
+                    await Promise.all(resolvedNested.map(u => deepCache(u, false)));
+
                 } catch (err) {
-                    console.error("Precaching error for:", absoluteUrl, err);
-                    await deleteIDBData(absoluteUrl).catch(() => { });
+                    console.error("Deep cache error for:", url, err);
+                    await deleteIDBData(url).catch(() => { });
                 } finally {
-                    await broadcastProgress();
+                    if (isTopLevel) await broadcastProgress();
                 }
+            }
+
+            const downloadTasks = urlsToCache.map(async (url) => {
+                const absoluteUrl = new URL(url, self.location.origin).href;
+                await deepCache(absoluteUrl, true);
             });
 
             await Promise.all(downloadTasks);

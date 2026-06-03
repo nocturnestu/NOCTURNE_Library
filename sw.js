@@ -1,4 +1,4 @@
-const CACHE_NAME = 'PRISM-v26.10.6';
+const CACHE_NAME = 'PRISM-v26.11';
 
 const PRISM_ONLY_URLS = [
     '/',
@@ -215,12 +215,40 @@ function deleteIDBData(key) {
 self.addEventListener('fetch', e => {
     const url = e.request.url;
 
+    if (url.includes('/sw.js')) {
+        e.respondWith(fetch(e.request));
+        return;
+    }
+
     if (url.endsWith('.mp3') || url.endsWith('.mp4')) {
         e.respondWith(
-            fetch(e.request).catch(() => new Response(new Blob([]), {
-                status: 200,
-                headers: { 'Content-Type': url.endsWith('.mp4') ? 'video/mp4' : 'audio/mpeg' }
-            }))
+            caches.match(e.request).then(cacheMatch => {
+                if (cacheMatch) return cacheMatch;
+
+                const params = new URLSearchParams(self.location.search);
+                const isStandalone = params.get('standalone') === 'true';
+
+                if (isStandalone) {
+                    return getIDBData(url).then(idbData => {
+                        if (idbData && idbData.blob) {
+                            return new Response(idbData.blob, {
+                                headers: { 'Content-Type': url.endsWith('.mp4') ? 'video/mp4' : 'audio/mpeg' }
+                            });
+                        }
+                        throw new Error('Not in IDB');
+                    }).catch(() => {
+                        return new Response(new Blob([]), {
+                            status: 200,
+                            headers: { 'Content-Type': url.endsWith('.mp4') ? 'video/mp4' : 'audio/mpeg' }
+                        });
+                    });
+                }
+
+                return new Response(new Blob([]), {
+                    status: 200,
+                    headers: { 'Content-Type': url.endsWith('.mp4') ? 'video/mp4' : 'audio/mpeg' }
+                });
+            })
         );
         return;
     }
@@ -250,14 +278,18 @@ self.addEventListener('fetch', e => {
             } catch (_) { }
         }
 
-        return fetch(e.request).catch(() => {
-            if (url.includes('/api/settings') || url.includes('/userdata/')) {
-                return new Response(JSON.stringify({ error: 'Offline' }), {
-                    status: 503,
-                    headers: { 'Content-Type': 'application/json' }
-                });
-            }
-            return new Response('', { status: 404 });
+        if (url.includes('giphy.com')) {
+            return fetch(e.request).catch(() => new Response('', { status: 404 }));
+        }
+
+        const clientsList = await self.clients.matchAll({ includeUncontrolled: true, type: 'window' });
+        for (const client of clientsList) {
+            client.postMessage({ type: 'MISSING_ASSET', url: url });
+        }
+
+        return new Response('Asset not found in cache. Network grab denied.', {
+            status: 404,
+            statusText: 'Strict Cache-Only Enforced'
         });
     })());
 });

@@ -6,17 +6,22 @@
     },
     {
         "key": "prism_app_updated",
-        "title": "Prism Update",
+        "title": "Prism: Update",
         "message": "Update complete. You are now running on the latest version of Prism."
     },
     {
         "key": "prism_update_pending",
-        "title": "Prism Update",
-        "message": "Update process cancelled. Prompt was closed, you can update Prism anytime at Settings > Refresh App Cache"
+        "title": "Prism: Update",
+        "message": "Update process cancelled. Prompt was closed, you can update Prism anytime at Settings > Update or Recache Prism."
     },
     {
         "key": "prism_manual_test",
-        "title": "NOCTURNE Studios",
+        "title": "Prism",
         "message": "Notification fired!"
+    },
+    {
+        "key": "prism_missing_asset",
+        "title": "Prism: Missing Assets",
+        "message": "Your current assets haven't fully loaded, this is because you picked 'Prism Only' when you updated Prism. For the full experience, choose 'Full Download' in Settings > Update or Recache Prism > Full Download."
     }
 ]

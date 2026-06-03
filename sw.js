@@ -1,4 +1,4 @@
-const CACHE_NAME = 'PRISM-v26.12.2';
+const CACHE_NAME = 'PRISM-v26.12.1';
 
 const PRISM_ONLY_URLS = [
     '/',
@@ -122,6 +122,7 @@ function deleteIDBData(key) {
     }));
 }
 
+
 self.addEventListener('install', e => {
     self.skipWaiting();
 
@@ -158,6 +159,7 @@ self.addEventListener('install', e => {
 
                     const response = await fetch(url);
                     if (!response.ok) {
+                        console.warn('[PRISM] Skipping non-OK:', url, response.status);
                         if (isTopLevel) await broadcastProgress();
                         return;
                     }
@@ -206,11 +208,13 @@ self.addEventListener('install', e => {
                         try {
                             await setIDBData(url, { blob: blobForIDB, type: contentType });
                         } catch (idbErr) {
+                            console.error('[PRISM] IDB write failed:', url, idbErr);
                             await deleteIDBData(url).catch(() => { });
                         }
                     }
 
                 } catch (err) {
+                    console.error('[PRISM] deepCache error:', url, err);
                     await deleteIDBData(url).catch(() => { });
                 } finally {
                     if (isTopLevel) await broadcastProgress();
@@ -224,6 +228,7 @@ self.addEventListener('install', e => {
     );
 });
 
+
 self.addEventListener('activate', e => {
     e.waitUntil(
         caches.keys().then(keys =>
@@ -232,6 +237,7 @@ self.addEventListener('activate', e => {
     );
     self.clients.claim();
 });
+
 
 self.addEventListener('fetch', e => {
     const url = e.request.url;
@@ -248,46 +254,80 @@ self.addEventListener('fetch', e => {
         return;
     }
 
-    const params = new URLSearchParams(self.location.search);
-    const isStandalone = params.get('standalone') === 'true';
+    if (url.endsWith('.mp3') || url.endsWith('.mp4')) {
+        e.respondWith((async () => {
+            const cached = await caches.match(e.request);
+            if (cached) return cached;
+
+            const params = new URLSearchParams(self.location.search);
+            if (params.get('standalone') === 'true') {
+                try {
+                    const idbData = await getIDBData(url);
+                    if (idbData?.blob) {
+                        return new Response(idbData.blob, {
+                            headers: { 'Content-Type': url.endsWith('.mp4') ? 'video/mp4' : 'audio/mpeg' }
+                        });
+                    }
+                } catch (_) { }
+            }
+
+            return new Response(new Blob([]), {
+                status: 200,
+                headers: { 'Content-Type': url.endsWith('.mp4') ? 'video/mp4' : 'audio/mpeg' }
+            });
+        })());
+        return;
+    }
+
+    if (url.startsWith('https://fonts.gstatic.com') || url.startsWith('https://fonts.googleapis.com')) {
+        e.respondWith((async () => {
+            const cached = await caches.match(e.request);
+            if (cached) return cached;
+
+            try {
+                const response = await fetch(e.request);
+                if (response.ok) {
+                    const cache = await caches.open(CACHE_NAME);
+                    cache.put(e.request, response.clone());
+                }
+                return response;
+            } catch (_) {
+                return new Response('', { status: 503 });
+            }
+        })());
+        return;
+    }
 
     e.respondWith((async () => {
         const cached = await caches.match(e.request);
         if (cached) return cached;
 
-        try {
-            const idbData = await getIDBData(url);
-            if (idbData?.blob) {
-                return new Response(idbData.blob, {
-                    headers: { 'Content-Type': idbData.type || 'application/octet-stream' }
-                });
-            }
-        } catch (_) { }
-
-        if (url.endsWith('.mp3') || url.endsWith('.mp4')) {
-            return new Response(new Blob([]), {
-                status: 200,
-                headers: { 'Content-Type': url.endsWith('.mp4') ? 'video/mp4' : 'audio/mpeg' }
-            });
-        }
+        const params = new URLSearchParams(self.location.search);
+        const isStandalone = params.get('standalone') === 'true';
 
         if (isStandalone) {
-            const clients = await self.clients.matchAll({ includeUncontrolled: true, type: 'window' });
-            for (const client of clients) {
-                client.postMessage({ type: 'MISSING_ASSET', url });
-            }
-            return new Response('Asset unavailable — run Cache Mode to update.', {
-                status: 503,
-                statusText: 'Offline'
-            });
+            try {
+                const idbData = await getIDBData(url);
+                if (idbData?.blob) {
+                    return new Response(idbData.blob, {
+                        headers: { 'Content-Type': idbData.type || 'application/octet-stream' }
+                    });
+                }
+            } catch (_) { }
         }
 
         try {
             const response = await fetch(e.request);
             if (response.ok) {
-                if (!url.includes('raw.githubusercontent.com')) {
-                    const cache = await caches.open(CACHE_NAME);
-                    cache.put(e.request, response.clone());
+                const cache = await caches.open(CACHE_NAME);
+                cache.put(e.request, response.clone());
+
+                if (isStandalone) {
+                    try {
+                        const blob = await response.clone().blob();
+                        const contentType = response.headers.get('content-type') || '';
+                        await setIDBData(url, { blob, type: contentType });
+                    } catch (_) { }
                 }
             }
             return response;

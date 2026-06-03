@@ -2811,20 +2811,18 @@
                 navigator.serviceWorker.register(`/sw.js?standalone=${isStandalone}&cacheMode=prism`);
             };
 
-            let _liveSwVersion = null;
-
             fetch('/sw.js', { cache: 'no-store' })
                 .then(res => res.text())
                 .then(text => {
                     const match = text.match(/const CACHE_NAME\s*=\s*['"](.+?)['"]/);
                     if (!match) { doRegister(); return; }
 
-                    _liveSwVersion = match[1];
+                    const liveVersion = match[1];
                     const savedVersion = localStorage.getItem(SW_VERSION_KEY);
 
-                    if (savedVersion !== _liveSwVersion) {
+                    if (savedVersion !== liveVersion) {
                         if (isStandalone) {
-                            const ok = confirm(`Prism Update\n\nNew version detected: ${_liveSwVersion}\n\nDo you want to update now?\n\nClick OK to open up Cache Mode\nClick Cancel to do nothing`);
+                            const ok = confirm(`Prism Update\n\nNew version detected: ${liveVersion}\n\nDo you want to update now?\n\nClick OK to open up Cache Mode\nClick Cancel to do nothing`);
                             if (ok) {
                                 openCacheModePicker(true);
                             } else {

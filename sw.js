@@ -74,6 +74,32 @@ self.addEventListener('install', e => {
                 }
             }
 
+            async function cacheGoogleFonts() {
+                const cssUrl = 'https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Space+Grotesk:wght@300;400;500;600;700&display=swap';
+                try {
+                    const cssResponse = await fetch(cssUrl);
+                    const cssText = await cssResponse.text();
+                    const fontUrlRegex = /url\((https:\/\/fonts\.gstatic\.com\/[^)]+)\)/g;
+                    let match;
+                    const fontUrls = [];
+                    while ((match = fontUrlRegex.exec(cssText)) !== null) {
+                        fontUrls.push(match[1]);
+                    }
+                    // Cache each font file
+                    for (const fontUrl of fontUrls) {
+                        const fontResponse = await fetch(fontUrl);
+                        if (fontResponse.ok) {
+                            const cache = await caches.open(CACHE_NAME);
+                            await cache.put(fontUrl, fontResponse);
+                        }
+                    }
+                } catch (err) {
+                    console.warn('Failed to cache Google Fonts files:', err);
+                }
+            }
+
+            e.waitUntil(cacheGoogleFonts());
+
             const downloadTasks = urlsToCache.map(async (url) => {
                 const absoluteUrl = new URL(url, self.location.origin).href;
                 try {
@@ -116,6 +142,7 @@ self.addEventListener('install', e => {
             });
 
             await Promise.all(downloadTasks);
+            await cacheGoogleFonts();
         })
     );
 });
@@ -213,6 +240,11 @@ self.addEventListener('fetch', e => {
             } catch (_) { }
 
             return new Response('', { status: 503 });
+        }
+
+        if (isStandalone && url.includes('giphy.com')) {
+            e.respondWith(fetch(e.request));
+            return;
         }
 
         return fetch(e.request).catch(() => {

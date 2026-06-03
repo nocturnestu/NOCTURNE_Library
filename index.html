@@ -2807,11 +2807,15 @@
             const SW_VERSION_KEY = 'PRISM_SW_VERSION';
             const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
 
+            const doRegister = () => {
+                navigator.serviceWorker.register(`/sw.js?standalone=${isStandalone}&cacheMode=prism`);
+            };
+
             fetch('/sw.js', { cache: 'no-store' })
                 .then(res => res.text())
                 .then(text => {
                     const match = text.match(/const CACHE_NAME\s*=\s*['"](.+?)['"]/);
-                    if (!match) return;
+                    if (!match) { doRegister(); return; }
 
                     const liveVersion = match[1];
                     const savedVersion = localStorage.getItem(SW_VERSION_KEY);
@@ -2823,15 +2827,16 @@
                                 openCacheModePicker(true);
                             } else {
                                 if (typeof fireUpdateNotif === 'function') fireUpdateNotif('prism_update_pending');
+                                doRegister();
                             }
                         } else {
-                            localStorage.setItem(SW_VERSION_KEY, liveVersion);
-                            navigator.serviceWorker.register(`/sw.js?standalone=${isStandalone}&cacheMode=prism`);
+                            doRegister();
                         }
                     } else {
-                        navigator.serviceWorker.register(`/sw.js?standalone=${isStandalone}&cacheMode=prism`);
+                        doRegister();
                     }
-                });
+                })
+                .catch(() => doRegister());
         }
     </script>
 </body>

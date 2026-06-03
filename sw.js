@@ -1,4 +1,4 @@
-const CACHE_NAME = 'PRISM-v26.11.1';
+const CACHE_NAME = 'PRISM-v26.11.2';
 
 const PRISM_ONLY_URLS = [
     '/',
@@ -222,11 +222,7 @@ self.addEventListener('fetch', e => {
         return;
     }
 
-    if (event.request.url.startsWith('https://fonts.googleapis.com') ||
-        event.request.url.startsWith('https://fonts.gstatic.com')) {
-        event.respondWith(fetch(event.request));
-        return;
-    }
+    if (e.request.method !== 'GET' || url.startsWith('chrome-extension://')) return;
 
     if (url.endsWith('.mp3') || url.endsWith('.mp4')) {
         e.respondWith(
@@ -244,12 +240,10 @@ self.addEventListener('fetch', e => {
                             });
                         }
                         throw new Error('Not in IDB');
-                    }).catch(() => {
-                        return new Response(new Blob([]), {
-                            status: 200,
-                            headers: { 'Content-Type': url.endsWith('.mp4') ? 'video/mp4' : 'audio/mpeg' }
-                        });
-                    });
+                    }).catch(() => new Response(new Blob([]), {
+                        status: 200,
+                        headers: { 'Content-Type': url.endsWith('.mp4') ? 'video/mp4' : 'audio/mpeg' }
+                    }));
                 }
 
                 return new Response(new Blob([]), {
@@ -261,14 +255,31 @@ self.addEventListener('fetch', e => {
         return;
     }
 
-    if (e.request.method !== 'GET' || url.startsWith('chrome-extension://')) return;
+    if (url.includes('giphy.com')) {
+        e.respondWith(fetch(e.request).catch(() => new Response('', { status: 404 })));
+        return;
+    }
 
-    const params = new URLSearchParams(self.location.search);
-    const isStandalone = params.get('standalone') === 'true';
+    if (url.startsWith('https://fonts.gstatic.com') || url.startsWith('https://fonts.googleapis.com')) {
+        e.respondWith(
+            caches.match(e.request).then(cached => {
+                if (cached) return cached;
+                return fetch(e.request).then(response => {
+                    const clone = response.clone();
+                    caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
+                    return response;
+                });
+            })
+        );
+        return;
+    }
 
     e.respondWith((async () => {
         const cacheMatch = await caches.match(e.request);
         if (cacheMatch) return cacheMatch;
+
+        const params = new URLSearchParams(self.location.search);
+        const isStandalone = params.get('standalone') === 'true';
 
         if (isStandalone) {
             try {
@@ -284,10 +295,6 @@ self.addEventListener('fetch', e => {
                     });
                 }
             } catch (_) { }
-        }
-
-        if (url.includes('giphy.com')) {
-            return fetch(e.request).catch(() => new Response('', { status: 404 }));
         }
 
         const clientsList = await self.clients.matchAll({ includeUncontrolled: true, type: 'window' });

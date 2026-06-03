@@ -2023,7 +2023,7 @@
                 <span class="dl-phase-status">Waiting</span>
             </div>
         </div>
-        <div class="dl-tip-box" id="download-tip">Loading lab logs...</div>
+        <div class="dl-tip-box" id="download-tip">Loading tips...</div>
     </div>
 
     <div id="cache-mode-page">
@@ -2769,6 +2769,19 @@
             window.fireTestNotif = function () {
                 fireByKey('prism_manual_test');
             };
+
+            let _missingNotifCooldown = false;
+            if (navigator.serviceWorker) {
+                navigator.serviceWorker.addEventListener('message', function (event) {
+                    if (event.data && event.data.type === 'MISSING_ASSET') {
+                        if (!_missingNotifCooldown) {
+                            fireByKey('prism_missing_asset');
+                            _missingNotifCooldown = true;
+                            setTimeout(() => { _missingNotifCooldown = false; }, 30000);
+                        }
+                    }
+                });
+            }
 
             document.addEventListener('DOMContentLoaded', function () {
                 syncToggleUI(getEnabled());

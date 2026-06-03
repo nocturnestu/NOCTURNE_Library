@@ -89,28 +89,6 @@ self.addEventListener('install', e => {
     const cacheMode = params.get('cacheMode') || 'prism';
     const urlsToCache = cacheMode === 'prism' ? PRISM_ONLY_URLS : FULL_URLS;
 
-    async function fetchWithRetry(url, retries = 3, delay = 1000) {
-        for (let i = 0; i < retries; i++) {
-            try {
-                const response = await fetch(url);
-                if (response.status === 404 && i < retries - 1) {
-                    console.warn(`Retrying 404 for ${url} (attempt ${i + 1}/${retries})`);
-                    await new Promise(r => setTimeout(r, delay * (i + 1)));
-                    continue;
-                }
-                if (!response.ok && response.status >= 500) {
-                    throw new Error(`HTTP ${response.status}`);
-                }
-                return response;
-            } catch (err) {
-                if (i === retries - 1) throw err;
-                console.warn(`Retry ${i + 1}/${retries} for ${url} after ${delay * (i + 1)}ms`);
-                await new Promise(r => setTimeout(r, delay * (i + 1)));
-            }
-        }
-        throw new Error(`Failed after ${retries} retries`);
-    }
-
     e.waitUntil(
         caches.open(CACHE_NAME).then(async (cache) => {
             let processedAssets = 0;
@@ -292,6 +270,19 @@ self.addEventListener('fetch', e => {
 
     if (url.includes('/sw.js')) {
         e.respondWith(fetch(e.request));
+        return;
+    }
+
+    if (url.includes('notifications.json')) {
+        e.respondWith((async () => {
+            const cacheMatch = await caches.match(e.request);
+            if (cacheMatch) return cacheMatch;
+
+            return new Response(JSON.stringify({ notifications: [], alerts: [] }), {
+                status: 200,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        })());
         return;
     }
 

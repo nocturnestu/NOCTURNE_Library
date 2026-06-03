@@ -18,6 +18,7 @@ const PRISM_ONLY_URLS = [
     'https://cdn.jsdelivr.net/npm/babylonjs-inspector@9.0.0/babylon.inspector.bundle.js',
     'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
     'https://assets.babylonjs.com/textures/flare.png',
+    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/sb3dfavicon.svg',
     './SandBox3D/sb3d_page',
     './RiftRunners2D/rr2d_page',
     './RiftRunners2D/RiftRunners2D',
@@ -30,15 +31,7 @@ const PRISM_ONLY_URLS = [
     './Other/mathlol'
 ];
 
-const FULL_URLS = [
-    '/',
-    '/index.html',
-    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/nocturneassets/logo.png',
-    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/nocturneassets/logo2.png',
-    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/nocturneassets/notifications.json',
-    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/nocturneassets/notifier.png',
-    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/nocturneassets/logo192.png',
-    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/sb3dfavicon.svg',
+const MISC_URLS = [
     'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/sb3dammo.js',
     'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/sb3dmatyou.js',
     'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/sb3duianim_pc.js',
@@ -54,31 +47,7 @@ const FULL_URLS = [
     'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/midnight/mid1.mp3',
     'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/midnight/mid2.mp3',
     'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/midnight/mid3.mp3',
-    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/midnight/mid4.mp3',
-    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/sb3duianim_mobile.js',
-    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/sb3duianim_pc.js',
-    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/sb3dmatyou.js',
-    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/sb3dammo.js',
-    'https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Space+Grotesk:wght@300;400;500;600;700&display=swap',
-    'https://fonts.googleapis.com/icon?family=Material+Icons+Round',
-    'https://cdnjs.cloudflare.com/ajax/libs/phaser/3.60.0/phaser.min.js',
-    'https://cdn.jsdelivr.net/npm/babylonjs@9.0.0/babylon.js',
-    'https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js',
-    'https://cdn.babylonjs.com/ammo.js',
-    'https://cdn.jsdelivr.net/npm/babylonjs-loaders@9.0.0/babylonjs.loaders.min.js',
-    'https://cdn.jsdelivr.net/npm/babylonjs-inspector@9.0.0/babylon.inspector.bundle.js',
-    'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
-    'https://assets.babylonjs.com/textures/flare.png',
-    './SandBox3D/sb3d_page',
-    './RiftRunners2D/rr2d_page',
-    './RiftRunners2D/RiftRunners2D',
-    './SandBox3D/SandBox3D_PC',
-    './SandBox3D/SandBox3D_Mobile',
-    './Other/ismycompteureron',
-    './Other/devcheck',
-    './Other/notmoving',
-    './Other/gifview',
-    './Other/mathlol'
+    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/midnight/mid4.mp3'
 ];
 
 self.addEventListener('install', e => {
@@ -87,7 +56,9 @@ self.addEventListener('install', e => {
     const params = new URLSearchParams(self.location.search);
     const isStandalone = params.get('standalone') === 'true';
     const cacheMode = params.get('cacheMode') || 'prism';
-    const urlsToCache = cacheMode === 'prism' ? PRISM_ONLY_URLS : FULL_URLS;
+    const urlsToCache = cacheMode === 'full'
+        ? [...new Set([...PRISM_ONLY_URLS, ...MISC_URLS])]
+        : PRISM_ONLY_URLS;
 
     e.waitUntil(
         caches.open(CACHE_NAME).then(async (cache) => {
@@ -217,16 +188,6 @@ function deleteIDBData(key) {
 self.addEventListener('fetch', e => {
     const url = e.request.url;
 
-    if (url.endsWith('.mp3') || url.endsWith('.mp4')) {
-        e.respondWith(
-            fetch(e.request).catch(() => new Response(new Blob([]), {
-                status: 200,
-                headers: { 'Content-Type': url.endsWith('.mp4') ? 'video/mp4' : 'audio/mpeg' }
-            }))
-        );
-        return;
-    }
-
     if (e.request.method !== 'GET' || url.startsWith('chrome-extension://')) return;
 
     const params = new URLSearchParams(self.location.search);
@@ -250,6 +211,8 @@ self.addEventListener('fetch', e => {
                     });
                 }
             } catch (_) { }
+
+            return new Response('', { status: 503 });
         }
 
         return fetch(e.request).catch(() => {

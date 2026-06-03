@@ -297,6 +297,10 @@ self.addEventListener('fetch', e => {
             return fetch(e.request).catch(() => new Response('', { status: 404 }));
         }
 
+        if (url.includes('/sw.js') || url.endsWith('sw.js')) {
+            return;
+        }
+
         if (url.endsWith('.mp3') || url.endsWith('.mp4')) {
             return new Response(new Blob([]), {
                 status: 200,

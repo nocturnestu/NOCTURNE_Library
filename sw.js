@@ -254,22 +254,22 @@ self.addEventListener('fetch', e => {
         return;
     }
 
+    const params = new URLSearchParams(self.location.search);
+    const isStandalone = params.get('standalone') === 'true';
+
     if (url.endsWith('.mp3') || url.endsWith('.mp4')) {
         e.respondWith((async () => {
             const cached = await caches.match(e.request);
             if (cached) return cached;
 
-            const params = new URLSearchParams(self.location.search);
-            if (params.get('standalone') === 'true') {
-                try {
-                    const idbData = await getIDBData(url);
-                    if (idbData?.blob) {
-                        return new Response(idbData.blob, {
-                            headers: { 'Content-Type': url.endsWith('.mp4') ? 'video/mp4' : 'audio/mpeg' }
-                        });
-                    }
-                } catch (_) { }
-            }
+            try {
+                const idbData = await getIDBData(url);
+                if (idbData?.blob) {
+                    return new Response(idbData.blob, {
+                        headers: { 'Content-Type': url.endsWith('.mp4') ? 'video/mp4' : 'audio/mpeg' }
+                    });
+                }
+            } catch (_) { }
 
             return new Response(new Blob([]), {
                 status: 200,
@@ -298,14 +298,11 @@ self.addEventListener('fetch', e => {
         return;
     }
 
-    e.respondWith((async () => {
-        const cached = await caches.match(e.request);
-        if (cached) return cached;
+    if (isStandalone) {
+        e.respondWith((async () => {
+            const cached = await caches.match(e.request);
+            if (cached) return cached;
 
-        const params = new URLSearchParams(self.location.search);
-        const isStandalone = params.get('standalone') === 'true';
-
-        if (isStandalone) {
             try {
                 const idbData = await getIDBData(url);
                 if (idbData?.blob) {
@@ -314,21 +311,37 @@ self.addEventListener('fetch', e => {
                     });
                 }
             } catch (_) { }
-        }
+
+            const clients = await self.clients.matchAll({ includeUncontrolled: true, type: 'window' });
+            for (const client of clients) {
+                client.postMessage({ type: 'MISSING_ASSET', url });
+            }
+            return new Response('Asset unavailable — run Cache Mode to update.', {
+                status: 503,
+                statusText: 'Offline'
+            });
+        })());
+        return;
+    }
+
+    e.respondWith((async () => {
+        const cached = await caches.match(e.request);
+        if (cached) return cached;
+
+        try {
+            const idbData = await getIDBData(url);
+            if (idbData?.blob) {
+                return new Response(idbData.blob, {
+                    headers: { 'Content-Type': idbData.type || 'application/octet-stream' }
+                });
+            }
+        } catch (_) { }
 
         try {
             const response = await fetch(e.request);
             if (response.ok) {
                 const cache = await caches.open(CACHE_NAME);
                 cache.put(e.request, response.clone());
-
-                if (isStandalone) {
-                    try {
-                        const blob = await response.clone().blob();
-                        const contentType = response.headers.get('content-type') || '';
-                        await setIDBData(url, { blob, type: contentType });
-                    } catch (_) { }
-                }
             }
             return response;
         } catch (_) {

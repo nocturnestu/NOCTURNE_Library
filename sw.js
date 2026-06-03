@@ -1,4 +1,4 @@
-const CACHE_NAME = 'PRISM-v26.11';
+const CACHE_NAME = 'PRISM-v26.11.1';
 
 const PRISM_ONLY_URLS = [
     '/',
@@ -17,6 +17,7 @@ const PRISM_ONLY_URLS = [
     'https://cdn.jsdelivr.net/npm/babylonjs-loaders@9.0.0/babylonjs.loaders.min.js',
     'https://cdn.jsdelivr.net/npm/babylonjs-inspector@9.0.0/babylon.inspector.bundle.js',
     'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
+    'https://assets.babylonjs.com/textures/flare.png',
     './SandBox3D/sb3d_page',
     './RiftRunners2D/rr2d_page',
     './RiftRunners2D/RiftRunners2D',
@@ -67,6 +68,7 @@ const FULL_URLS = [
     'https://cdn.jsdelivr.net/npm/babylonjs-loaders@9.0.0/babylonjs.loaders.min.js',
     'https://cdn.jsdelivr.net/npm/babylonjs-inspector@9.0.0/babylon.inspector.bundle.js',
     'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
+    'https://assets.babylonjs.com/textures/flare.png',
     './SandBox3D/sb3d_page',
     './RiftRunners2D/rr2d_page',
     './RiftRunners2D/RiftRunners2D',
@@ -217,6 +219,12 @@ self.addEventListener('fetch', e => {
 
     if (url.includes('/sw.js')) {
         e.respondWith(fetch(e.request));
+        return;
+    }
+
+    if (event.request.url.startsWith('https://fonts.googleapis.com') ||
+        event.request.url.startsWith('https://fonts.gstatic.com')) {
+        event.respondWith(fetch(event.request));
         return;
     }
 

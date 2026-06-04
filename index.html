@@ -1551,6 +1551,13 @@
                 display: block;
             }
         }
+
+        @media not all and (display-mode: standalone) {
+            #recache-btn,
+            .storage-heading {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 
@@ -1828,6 +1835,7 @@
         </div>
         <h1 style="font-family: 'Space Grotesk';">Settings</h1>
         <p style="font-size: 12px; color: var(--text-sub); margin-bottom: 12px;">Switch up the vibe for your Prism. Changes take effect instantly.</p>
+
         <div style="margin-top: 24px;">
             <h3 style="font-family: 'Space Grotesk'; font-size: 16px; margin-bottom: 12px;">Visuals</h3>
             <div class="list-item" id="gif-toggle-container" style="cursor: pointer; justify-content: space-between;" onclick="if(navigator.onLine) toggleGifBackground()">
@@ -1840,6 +1848,7 @@
                 </div>
                 <i class="material-icons-round" id="toggle-icon">toggle_on</i>
             </div>
+
             <h3 style="font-family: 'Space Grotesk'; font-size: 16px; margin-top: 20px; margin-bottom: 8px;">GIF Preset</h3>
             <select id="gif-selector" class="setting-select" onchange="handleGifSelect(this.value)">
                 <option value="gif1">Prism Preset GIF</option>
@@ -1855,6 +1864,7 @@
                 <button id="gif-custom-url-apply" onclick="applyCustomGifUrl()">Apply</button>
             </div>
         </div>
+
         <h3 style="font-family: 'Space Grotesk'; font-size: 16px; margin-top: 24px; margin-bottom: 8px;">Theme Preset</h3>
         <select id="theme-selector" class="setting-select" onchange="changeTheme(this.value)">
             <option value="blurple">Shamanic Blurple (Default)</option>
@@ -1863,6 +1873,7 @@
             <option value="ruby">Great Ruby</option>
             <option value="mono">Nostalgic</option>
         </select>
+
         <h3 style="font-family: 'Space Grotesk'; font-size: 16px; margin-top: 24px; margin-bottom: 12px;">Performance</h3>
         <div class="list-group">
             <div class="list-item" style="cursor: pointer; justify-content: space-between;"
@@ -1885,6 +1896,7 @@
                 <i class="material-icons-round" id="icon-no-anim">toggle_off</i>
             </div>
         </div>
+
         <div id="notif-settings-group">
             <h3 style="font-family: 'Space Grotesk'; font-size: 16px; margin-top: 24px; margin-bottom: 12px;">Notifications</h3>
             <div class="list-group">
@@ -1910,7 +1922,8 @@
                 </div>
             </div>
         </div>
-
+        
+        <h3 class="storage-heading" style="font-family: 'Space Grotesk'; font-size: 16px; margin-bottom: 12px;">Storage</h3>
         <button id="recache-btn" class="list-item" style="width: 100%; border: none; cursor: pointer;"
             onclick="openCacheModePicker()">
             <i class="material-icons-round item-icon">refresh</i>
@@ -1968,9 +1981,8 @@
             <span style="font-size: 12.5px; color: var(--text-sub); line-height: 1.5;">A new version of <strong
                     style="color: var(--text); font-weight: 600;">Prism</strong> is available.</span>
         </div>
-        <h1 style="font-family: 'Space Grotesk'; margin-bottom: 6px;">Refresh App Cache</h1>
-        <p style="font-size: 12px; color: var(--text-sub); margin-bottom: 28px;">Re-downloads all Prism and NOCTURNE project
-            assets from scratch. Use this to apply updates or fix a broken install.</p>
+        <h1 style="font-family: 'Space Grotesk'; margin-bottom: 6px;">Download Mode</h1>
+        <p style="font-size: 12px; color: var(--text-sub); margin-bottom: 28px;">Refreshes Prism or installs a new version.</p>
     
         <button class="cta-btn" onclick="confirmAndRecache()">
             <i class="material-icons-round">refresh</i>
@@ -2102,7 +2114,7 @@
         }
 
         function confirmAndRecache() {
-            if (!confirm(`Refresh App Cache\n\nThis will purge current assets and re-download everything.\n\nClick OK to proceed\nClick Cancel to do nothing`)) return;
+            if (!confirm(`Download Mode\nCAUTION!\n\nThis will purge current assets and re-download everything.\n\nClick OK to proceed\nClick Cancel to do nothing`)) return;
             closeCacheModePicker();
             clearAndRecache('full');
         }

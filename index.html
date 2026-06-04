@@ -1274,10 +1274,6 @@
             margin-bottom: 32px;
         }
 
-        @media not (display-mode: standalone) {
-            #pwa-only-settings { display: none !important; }
-        }
-
         body.no-gif .bg-gif {
             display: none !important;
         }
@@ -2095,13 +2091,6 @@
                 }
             });
         })();
-
-        (function checkPWAStorageVisibility() {
-            if (window.matchMedia('(display-mode: standalone)').matches) {
-                document.getElementById('pwa-only-settings').style.display = 'block';
-            }
-        })();
-
 
         function openCacheModePicker(fromUpdate = false) {
             const banner = document.getElementById('cache-mode-update-banner');

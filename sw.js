@@ -216,26 +216,26 @@ self.addEventListener('fetch', e => {
     }
 
     e.respondWith((async () => {
+        const cacheMatch = await caches.match(e.request);
+        if (cacheMatch) return cacheMatch;
+
+        try {
+            const idbData = await getIDBData(url);
+            if (idbData) {
+                if (idbData.blob) {
+                    return new Response(idbData.blob, {
+                        headers: { 'Content-Type': idbData.type || 'application/octet-stream' }
+                    });
+                }
+                return new Response(JSON.stringify(idbData), {
+                    headers: { 'Content-Type': 'application/json' }
+                });
+            }
+        } catch (_) { }
+
         try {
             return await fetch(e.request);
         } catch (err) {
-            const cacheMatch = await caches.match(e.request);
-            if (cacheMatch) return cacheMatch;
-
-            try {
-                const idbData = await getIDBData(url);
-                if (idbData) {
-                    if (idbData.blob) {
-                        return new Response(idbData.blob, {
-                            headers: { 'Content-Type': idbData.type || 'application/octet-stream' }
-                        });
-                    }
-                    return new Response(JSON.stringify(idbData), {
-                        headers: { 'Content-Type': 'application/json' }
-                    });
-                }
-            } catch (_) { }
-
             if (url.includes('/api/settings') || url.includes('/userdata/')) {
                 return new Response(JSON.stringify({ error: 'Offline' }), {
                     status: 503,

@@ -1,24 +1,8 @@
-const CACHE_NAME = 'PRISM-v26.10.6';
+const CACHE_NAME = 'PRISM-v26.12';
 
-const PRISM_ONLY_URLS = [
+const FULL_URLS = [
     '/',
     '/index.html',
-    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/nocturneassets/logo.png',
-    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/nocturneassets/logo2.png',
-    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/nocturneassets/notifier.png',
-    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/nocturneassets/notifications.json',
-    'https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Space+Grotesk:wght@300;400;500;600;700&display=swap',
-    'https://fonts.googleapis.com/icon?family=Material+Icons+Round',
-    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/nocturneassets/logo192.png',
-    'https://cdnjs.cloudflare.com/ajax/libs/phaser/3.60.0/phaser.min.js',
-    'https://cdn.jsdelivr.net/npm/babylonjs@9.0.0/babylon.js',
-    'https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js',
-    'https://cdn.babylonjs.com/ammo.js',
-    'https://cdn.jsdelivr.net/npm/babylonjs-loaders@9.0.0/babylonjs.loaders.min.js',
-    'https://cdn.jsdelivr.net/npm/babylonjs-inspector@9.0.0/babylon.inspector.bundle.js',
-    'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
-    'https://assets.babylonjs.com/textures/flare.png',
-    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/sb3dfavicon.svg',
     './SandBox3D/sb3d_page',
     './RiftRunners2D/rr2d_page',
     './RiftRunners2D/RiftRunners2D',
@@ -28,10 +12,10 @@ const PRISM_ONLY_URLS = [
     './Other/devcheck',
     './Other/notmoving',
     './Other/gifview',
-    './Other/mathlol'
-];
-
-const MISC_URLS = [
+    './Other/mathlol',
+    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/nocturneassets/logo.png',
+    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/nocturneassets/logo2.png',
+    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/sb3dfavicon.svg',
     'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/sb3dammo.js',
     'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/sb3dmatyou.js',
     'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/sb3duianim_pc.js',
@@ -47,7 +31,18 @@ const MISC_URLS = [
     'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/midnight/mid1.mp3',
     'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/midnight/mid2.mp3',
     'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/midnight/mid3.mp3',
-    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/midnight/mid4.mp3'
+    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/midnight/mid4.mp3',
+    'https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Space+Grotesk:wght@300;400;500;600;700&display=swap',
+    'https://fonts.googleapis.com/icon?family=Material+Icons+Round',
+    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/nocturneassets/logo192.png',
+    'https://cdnjs.cloudflare.com/ajax/libs/phaser/3.60.0/phaser.min.js',
+    'https://cdn.jsdelivr.net/npm/babylonjs@9.0.0/babylon.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js',
+    'https://cdn.babylonjs.com/ammo.js',
+    'https://cdn.jsdelivr.net/npm/babylonjs-loaders@9.0.0/babylonjs.loaders.min.js',
+    'https://cdn.jsdelivr.net/npm/babylonjs-inspector@9.0.0/babylon.inspector.bundle.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
+    'https://assets.babylonjs.com/textures/flare.png'
 ];
 
 self.addEventListener('install', e => {
@@ -55,10 +50,7 @@ self.addEventListener('install', e => {
 
     const params = new URLSearchParams(self.location.search);
     const isStandalone = params.get('standalone') === 'true';
-    const cacheMode = params.get('cacheMode') || 'prism';
-    const urlsToCache = cacheMode === 'full'
-        ? [...new Set([...PRISM_ONLY_URLS, ...MISC_URLS])]
-        : PRISM_ONLY_URLS;
+    const urlsToCache = FULL_URLS;
 
     e.waitUntil(
         caches.open(CACHE_NAME).then(async (cache) => {
@@ -224,10 +216,12 @@ self.addEventListener('fetch', e => {
     }
 
     e.respondWith((async () => {
-        const cacheMatch = await caches.match(e.request);
-        if (cacheMatch) return cacheMatch;
+        try {
+            return await fetch(e.request);
+        } catch (err) {
+            const cacheMatch = await caches.match(e.request);
+            if (cacheMatch) return cacheMatch;
 
-        if (isStandalone) {
             try {
                 const idbData = await getIDBData(url);
                 if (idbData) {
@@ -242,17 +236,13 @@ self.addEventListener('fetch', e => {
                 }
             } catch (_) { }
 
-            return new Response('', { status: 503 });
-        }
-
-        return fetch(e.request).catch(() => {
             if (url.includes('/api/settings') || url.includes('/userdata/')) {
                 return new Response(JSON.stringify({ error: 'Offline' }), {
                     status: 503,
                     headers: { 'Content-Type': 'application/json' }
                 });
             }
-            return new Response('', { status: 404 });
-        });
+            return new Response('', { status: 503 });
+        }
     })());
 });

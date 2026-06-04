@@ -73,7 +73,6 @@
       z-index: 1;
     }
 
-    /* ─── SCREEN SYSTEM ─── */
     .screen {
       display: none;
     }
@@ -82,7 +81,6 @@
       display: flex;
     }
 
-    /* ─── MODE SELECT SCREEN ─── */
     #screen-mode {
       flex-direction: column;
       align-items: center;
@@ -287,7 +285,6 @@
       border: 1px solid var(--border);
     }
 
-    /* ─── GAME SCREEN ─── */
     #screen-game {
       flex-direction: column;
       align-items: center;
@@ -639,7 +636,6 @@
       transform: scale(0.96);
     }
 
-    /* ─── ANIMATIONS ─── */
     @keyframes shake-input {
 
       0%,
@@ -717,6 +713,87 @@
     #game-inner {
       animation: fadeIn 0.25s ease;
     }
+
+    .mode-card.superez {
+      border-color: #00bcd433;
+    }
+    .mode-card.superez::before {
+      background: radial-gradient(ellipse at 10% 50%, #00bcd408, transparent 70%);
+    }
+    .mode-card.superez:hover {
+      border-color: #00bcd4aa;
+      box-shadow: 0 0 40px rgba(0, 188, 212, 0.15);
+      background: #001f24;
+    }
+    .mode-card.superez:hover::before {
+      opacity: 1;
+    }
+    .mode-card.superez .card-label {
+      color: #00bcd4;
+    }
+    .mode-card.superez .card-tag {
+      background: #00bcd420;
+      color: #00bcd4;
+      border: 1px solid #00bcd440;
+    }
+    #mode-badge.superez {
+      background: #00bcd420;
+      color: #00bcd4;
+      border: 1px solid #00bcd440;
+    }
+    .toggle-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 10px 16px;
+      border-radius: 30px;
+      cursor: pointer;
+      user-select: none;
+      transition: border-color 0.12s;
+    }
+    .toggle-container:hover {
+      border-color: var(--accent);
+    }
+    .toggle-label {
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text);
+    }
+    #options-row {
+      display: none;
+      gap: 12px;
+      width: 100%;
+      justify-content: center;
+    }
+    .bubble-btn {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: clamp(1.2rem, 5vw, 1.5rem);
+      font-weight: 700;
+      padding: 14px 16px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: border-color 0.12s, background 0.12s, transform 0.1s;
+    }
+    .bubble-btn:hover:not(:disabled) {
+      border-color: var(--accent);
+      background: var(--surface2);
+      transform: scale(1.03);
+    }
+    .bubble-btn:active:not(:disabled) {
+      transform: scale(0.97);
+    }
+    .bubble-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
   </style>
 </head>
 
@@ -725,12 +802,29 @@
   <div id="flash-overlay"></div>
   <canvas id="canvas"></canvas>
 
-  <!-- ═══ MODE SELECT SCREEN ═══ -->
   <div id="screen-mode" class="screen active">
     <div class="mode-title">MATH<br>OR DIE</div>
     <div class="mode-subtitle">choose your poison</div>
 
     <div class="mode-cards">
+
+      <label class="toggle-container">
+        <input type="checkbox" id="bubbles-toggle" style="accent-color: var(--accent);">
+        <span class="toggle-label">Answer Bubbles Mode 👀</span>
+      </label>
+
+      <div class="mode-card superez" onclick="startGame('superez')">
+        <div class="card-top">
+          <span class="card-icon">👶</span>
+          <span class="card-label">SUPER EZ</span>
+          <span class="card-tag">respects kids</span>
+        </div>
+        <div class="card-desc">Capped at 10. Ultimate safe space. No pressure, just absolute chill vibes.</div>
+        <div class="card-ops">
+          <span class="op-chip">+ ADDITION</span>
+          <span class="op-chip">− SUBTRACTION</span>
+        </div>
+      </div>
 
       <div class="mode-card ez" onclick="startGame('ez')">
         <div class="card-top">
@@ -781,7 +875,6 @@
     </div>
   </div>
 
-  <!-- ═══ GAME SCREEN ═══ -->
   <div id="screen-game" class="screen">
     <div id="game-inner">
 
@@ -831,6 +924,8 @@
 
       <div id="feedback"></div>
 
+      <div id="options-row"></div>
+
       <div id="bottom-bar">
         <div id="streak-display">streak: 0 🔥</div>
         <button id="next-btn" onclick="nextQuestion()">NEXT →</button>
@@ -844,6 +939,16 @@
     const WRONG_EMOJIS = ['😡', '💀', '🤬', '👿', '🔴', '💢', '😤', '🤮', '🗑️', '💩', '☠️', '🥴', '😭', '😱', '🤡', '👎', '⛔', '🚨', '💔', '🤯'];
 
     const MODES = {
+      superez: {
+        ops: ['add', 'sub'],
+        ranges: { add: [1, 10], sub: [1, 10] },
+        timerEnabled: false,
+        timerSecs: null,
+        wrongPenalty: 1,
+        bonusPerStreak: 1,
+        label: 'SUPER EZ MODE',
+        badgeClass: 'superez',
+      },
       ez: {
         ops: ['add', 'sub'],
         ranges: { add: [1, 20], sub: [1, 20] },
@@ -884,6 +989,7 @@
     };
 
     let currentMode = null;
+    let answerBubblesEnabled = false;
     let score = 0, correctCount = 0, wrongCount = 0, streak = 0, totalAsked = 0;
     let currentAnswer = null;
     let locked = false;
@@ -907,6 +1013,7 @@
     }
 
     function startGame(mode) {
+      answerBubblesEnabled = document.getElementById('bubbles-toggle').checked;
       currentMode = mode;
       resetGameState();
       const cfg = MODES[mode];
@@ -982,6 +1089,17 @@
       document.getElementById('answer-input').focus();
 
       if (MODES[currentMode].timerEnabled) startTimer();
+
+      const optionsRow = document.getElementById('options-row');
+      const inputRow = document.getElementById('input-row');
+      if (answerBubblesEnabled) {
+        inputRow.style.display = 'none';
+        optionsRow.style.display = 'flex';
+        generateBubbleOptions(currentAnswer);
+      } else {
+        inputRow.style.display = 'flex';
+        optionsRow.style.display = 'none';
+      }
     }
 
     function startTimer() {
@@ -1020,6 +1138,7 @@
       document.getElementById('submit-btn').style.display = 'none';
       document.getElementById('next-btn').style.display = 'block';
       document.getElementById('answer-input').value = '';
+      document.querySelectorAll('.bubble-btn').forEach(b => b.disabled = true);
       handleWrong(true);
     }
 
@@ -1077,6 +1196,38 @@
     function pickTimeoutMsg() {
       const msgs = ['⏱ TOO SLOW. RIP 💀', 'TIMED OUT. EMBARRASSING ☠️', 'THE CLOCK ATE YOU ALIVE ⏱', 'TOUCH TYPE FASTER NEXT TIME 🤡', 'TIME\'S UP! SKILL ISSUE 🥴'];
       return msgs[Math.floor(Math.random() * msgs.length)];
+    }
+
+    function generateBubbleOptions(correct) {
+      const optionsRow = document.getElementById('options-row');
+      optionsRow.innerHTML = '';
+      const choices = [correct];
+      while (choices.length < 3) {
+        let offset = rnd(-4, 4);
+        if (offset === 0) continue;
+        let wrong = correct + offset;
+        if (currentMode === 'superez' || currentMode === 'ez') wrong = Math.max(0, wrong);
+        if (!choices.includes(wrong)) choices.push(wrong);
+      }
+      choices.sort(() => Math.random() - 0.5);
+      choices.forEach(val => {
+        const btn = document.createElement('button');
+        btn.className = 'bubble-btn';
+        btn.textContent = val;
+        btn.onclick = () => selectOption(val);
+        optionsRow.appendChild(btn);
+      });
+    }
+
+    function selectOption(val) {
+      if (locked) return;
+      locked = true;
+      stopTimer();
+      document.querySelectorAll('.bubble-btn').forEach(b => b.disabled = true);
+      document.getElementById('submit-btn').style.display = 'none';
+      document.getElementById('next-btn').style.display = 'block';
+      if (Math.abs(val - currentAnswer) < 0.01) handleCorrect();
+      else handleWrong(false);
     }
 
     function shakeEverything() {

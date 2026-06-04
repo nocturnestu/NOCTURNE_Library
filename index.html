@@ -1538,16 +1538,6 @@
             }
         }
 
-        #notif-settings-group {
-            display: none;
-        }
-
-        @media (display-mode: standalone) {
-            #notif-settings-group {
-                display: block;
-            }
-        }
-
         @media not all and (display-mode: standalone) {
             #recache-btn,
             .storage-heading {
@@ -1892,36 +1882,10 @@
                 <i class="material-icons-round" id="icon-no-anim">toggle_off</i>
             </div>
         </div>
-
-        <div id="notif-settings-group">
-            <h3 style="font-family: 'Space Grotesk'; font-size: 16px; margin-top: 24px; margin-bottom: 12px;">Notifications</h3>
-            <div class="list-group">
-                <div class="list-item" style="cursor: pointer; justify-content: space-between;" onclick="toggleNotifPermission()">
-                    <div style="display: flex; align-items: center; gap: 14px;">
-                        <i class="material-icons-round item-icon">notifications</i>
-                        <div class="item-content">
-                            <div class="item-title">Push Notifications</div>
-                            <div class="item-subtitle" id="notif-setting-sub">Off</div>
-                        </div>
-                    </div>
-                    <i class="material-icons-round" id="icon-notif-toggle" style="color: var(--text-muted);">toggle_off</i>
-                </div>
-                <div class="list-item" style="cursor: pointer; justify-content: space-between; margin-top: 8px;" onclick="fireTestNotif()">
-                    <div style="display: flex; align-items: center; gap: 14px;">
-                        <i class="material-icons-round item-icon">notification_important</i>
-                        <div class="item-content">
-                            <div class="item-title">Send Test Notification</div>
-                            <div class="item-subtitle">Manually fire a notification</div>
-                        </div>
-                    </div>
-                    <i class="material-icons-round" style="color: var(--text-muted);">chevron_right</i>
-                </div>
-            </div>
-        </div>
         
         <h3 class="storage-heading" style="font-family: 'Space Grotesk'; font-size: 16px; margin-bottom: 12px;">Storage</h3>
         <button id="recache-btn" class="list-item" style="width: 100%; border: none; cursor: pointer;"
-            onclick="openCacheModePicker()">
+            onclick="confirmAndRecache()">
             <i class="material-icons-round item-icon">refresh</i>
             <div class="item-content">
                 <div class="item-title">Refresh Prism</div>
@@ -2092,19 +2056,8 @@
             });
         })();
 
-        function openCacheModePicker(fromUpdate = false) {
-            const banner = document.getElementById('cache-mode-update-banner');
-            if (banner) banner.style.display = fromUpdate ? 'flex' : 'none';
-            document.getElementById('cache-mode-page').classList.add('open');
-        }
-
-        function closeCacheModePicker() {
-            document.getElementById('cache-mode-page').classList.remove('open');
-        }
-
         function confirmAndRecache() {
             if (!confirm(`Download Mode\nCAUTION!\n\nThis will purge current assets and re-download everything.\n\nClick OK to proceed\nClick Cancel to do nothing`)) return;
-            closeCacheModePicker();
             clearAndRecache('full');
         }
 
@@ -2607,103 +2560,6 @@
         })();
     </script>
     <script>
-        (function () {
-            const PERM_KEY = 'prism_notif_enabled';
-            const SEEN_KEY = 'prism_notif_seen';
-            const NOTIF_JSON = 'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/nocturneassets/notifications.json';
-            const NOTIF_VERSION_KEY = 'prism_notif_last_version';
-            const ICON = 'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/nocturneassets/notifier.png';
-
-            function getEnabled() {
-                return localStorage.getItem(PERM_KEY) === 'true';
-            }
-
-            function syncToggleUI(enabled) {
-                const icon = document.getElementById('icon-notif-toggle');
-                const sub = document.getElementById('notif-setting-sub');
-                if (!icon || !sub) return;
-                icon.textContent = enabled ? 'toggle_on' : 'toggle_off';
-                icon.style.color = enabled ? 'var(--primary)' : 'var(--text-muted)';
-                sub.textContent = enabled
-                    ? (Notification.permission === 'granted' ? 'On' : 'Pending browser permission')
-                    : 'Off';
-            }
-
-            function showNotif(title, message) {
-                const opts = { body: message, icon: ICON };
-                if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-                    navigator.serviceWorker.ready.then(reg => reg.showNotification(title, opts));
-                } else {
-                    new Notification(title, opts);
-                }
-            }
-
-            function fireByKey(key) {
-                if (!getEnabled() || Notification.permission !== 'granted') return;
-                fetch(NOTIF_JSON + '?_=' + Date.now())
-                    .then(r => r.json())
-                    .then(notifs => {
-                        const entry = notifs.find(n => n.key === key);
-                        if (entry) showNotif(entry.title, entry.message);
-                    })
-                    .catch(() => { });
-            }
-
-            window.toggleNotifPermission = function () {
-                const next = !getEnabled();
-                localStorage.setItem(PERM_KEY, String(next));
-
-                if (next && Notification.permission === 'default') {
-                    Notification.requestPermission().then(perm => {
-                        syncToggleUI(perm === 'granted');
-                        if (perm === 'granted') fireWelcomeIfUnseen();
-                    });
-                } else if (next && Notification.permission === 'granted') {
-                    syncToggleUI(true);
-                    fireWelcomeIfUnseen();
-                } else {
-                    syncToggleUI(false);
-                }
-            };
-
-            function fireWelcomeIfUnseen() {
-                const seen = JSON.parse(localStorage.getItem(SEEN_KEY) || '[]');
-                if (seen.includes('prism_welcome_v1')) return;
-                fireByKey('prism_welcome_v1');
-                seen.push('prism_welcome_v1');
-                localStorage.setItem(SEEN_KEY, JSON.stringify(seen));
-            }
-
-            window.fireUpdateNotif = function (key) {
-                const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
-                if (!isStandalone) return;
-                fireByKey(key);
-            };
-
-            window.fireTestNotif = function () {
-                fireByKey('prism_manual_test');
-            };
-
-            document.addEventListener('DOMContentLoaded', function () {
-                syncToggleUI(getEnabled());
-
-                const currentAppVersion = localStorage.getItem('PRISM_SW_VERSION');
-                const lastNotifVersion = localStorage.getItem(NOTIF_VERSION_KEY);
-
-                if (currentAppVersion && currentAppVersion !== lastNotifVersion) {
-                    localStorage.setItem(NOTIF_VERSION_KEY, currentAppVersion);
-
-                    if (lastNotifVersion !== null) {
-                        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
-                        if (isStandalone && getEnabled() && Notification.permission === 'granted') {
-                            fireByKey('prism_app_updated');
-                        }
-                    }
-                }
-            });
-        })();
-    </script>
-    <script>
         if ('serviceWorker' in navigator) {
             const SW_VERSION_KEY = 'PRISM_SW_VERSION';
             const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
@@ -2719,11 +2575,10 @@
 
                     if (savedVersion !== liveVersion) {
                         if (isStandalone) {
-                            const ok = confirm(`Prism Update\n\nNew version detected: ${liveVersion}\n\nDo you want to update now?\n\nClick OK to open up Cache Mode\nClick Cancel to do nothing`);
+                            const ok = confirm(`Prism Update\n\nNew version detected: ${liveVersion}\n\nDo you want to update now?\n\nClick OK to reinstall now\nClick Cancel to do nothing`);
                             if (ok) {
-                                openCacheModePicker(true);
-                            } else {
-                                if (typeof fireUpdateNotif === 'function') fireUpdateNotif('prism_update_pending');
+                                localStorage.setItem(SW_VERSION_KEY, liveVersion);
+                                clearAndRecache('full');
                             }
                         } else {
                             localStorage.setItem(SW_VERSION_KEY, liveVersion);

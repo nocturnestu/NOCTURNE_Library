@@ -1566,6 +1566,19 @@
         <div class="loader-bar-wrap" id="loader-bar-wrap">
             <div class="loader-bar" id="loader-bar"></div>
         </div>
+        <div id="loader-status" style="
+            margin-top: 16px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: rgba(200,202,228,0.45);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            text-align: center;
+            min-height: 16px;
+        "></div>
     </div>
 
     <div class="page" id="page">
@@ -2459,29 +2472,139 @@
             el.appendChild(circle);
         }
 
-        window.addEventListener('load', function () {
+        window.addEventListener('load', async function () {
             var loader = document.getElementById('startup-loader');
             var ring = document.getElementById('loader-ring');
             var wordmark = document.getElementById('loader-wordmark');
             var barWrap = document.getElementById('loader-bar-wrap');
             var bar = document.getElementById('loader-bar');
+            var statusEl = document.getElementById('loader-status');
             var page = document.getElementById('page');
 
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('/sw.js');
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+                || navigator.standalone === true;
+
+            function setStatus(text) {
+                if (!statusEl) return;
+                statusEl.style.opacity = '0';
+                setTimeout(() => {
+                    statusEl.textContent = text;
+                    statusEl.style.opacity = '1';
+                }, 200);
             }
 
-            setTimeout(function () { ring.classList.add('show'); }, 250);
-            setTimeout(function () { wordmark.classList.add('show'); }, 750);
-            setTimeout(function () {
-                barWrap.classList.add('show');
-                setTimeout(function () { bar.classList.add('fill'); }, 60);
-            }, 1050);
-            setTimeout(function () {
+            function dismissLoader() {
                 loader.style.opacity = '0';
                 page.style.opacity = '1';
-                setTimeout(function () { loader.style.display = 'none'; }, 700);
-            }, 2600);
+                setTimeout(() => { loader.style.display = 'none'; }, 700);
+            }
+
+            setTimeout(() => ring.classList.add('show'), 250);
+            setTimeout(() => wordmark.classList.add('show'), 750);
+            setTimeout(() => {
+                barWrap.classList.add('show');
+                setTimeout(() => bar.classList.add('fill'), 60);
+            }, 1050);
+
+            if (!isStandalone) {
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.register('/sw.js');
+                }
+                setTimeout(dismissLoader, 2600);
+                return;
+            }
+
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/sw.js?standalone=true');
+            }
+
+            const PRISM_URLS = await (async () => {
+                try {
+                    const res = await fetch('/sw.js', { cache: 'no-store' });
+                    const text = await res.text();
+                    const match = text.match(/const FULL_URLS\s*=\s*\[([\s\S]*?)\];/);
+                    if (!match) return [];
+                    const raw = match[1].replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
+                    return [...raw.matchAll(/'([^']+)'/g)].map(m => m[1]);
+                } catch (_) {
+                    return [];
+                }
+            })();
+
+            const origin = location.origin;
+
+            function resolveUrl(url) {
+                if (url.startsWith('http')) return url;
+                if (url === '/') return origin + '/';
+                return new URL(url, origin + '/').href;
+            }
+
+            async function checkCacheStorage(url) {
+                try {
+                    const keys = await caches.keys();
+                    for (const key of keys) {
+                        const cache = await caches.open(key);
+                        const match = await cache.match(url);
+                        if (match) return true;
+                    }
+                } catch (_) { }
+                return false;
+            }
+
+            async function checkIDB(url) {
+                return new Promise(resolve => {
+                    try {
+                        const req = indexedDB.open('NOCTURNE_Studios_DB', 1);
+                        req.onsuccess = e => {
+                            const db = e.target.result;
+                            try {
+                                const tx = db.transaction('dynamic-cache', 'readonly');
+                                const store = tx.objectStore('dynamic-cache');
+                                const get = store.get(url);
+                                get.onsuccess = () => resolve(!!get.result);
+                                get.onerror = () => resolve(false);
+                            } catch (_) { resolve(false); }
+                        };
+                        req.onerror = () => resolve(false);
+                    } catch (_) { resolve(false); }
+                });
+            }
+
+            const missing = [];
+            const total = PRISM_URLS.length;
+            let checked = 0;
+
+            setStatus('Checking cache...');
+            statusEl.style.opacity = '1';
+
+            await Promise.all(PRISM_URLS.map(async rawUrl => {
+                const url = resolveUrl(rawUrl);
+                const inCache = await checkCacheStorage(url);
+                const inIDB = inCache ? false : await checkIDB(url);
+
+                if (!inCache && !inIDB) missing.push(rawUrl);
+
+                checked++;
+                const pct = Math.round((checked / total) * 100);
+                setStatus(`Checking cache... ${pct}%`);
+            }));
+
+            if (missing.length > 0) {
+                setStatus('Issues found');
+                const listPreview = missing.slice(0, 6).map(u => `  • ${u}`).join('\n');
+                const extra = missing.length > 6 ? `\n  ...and ${missing.length - 6} more` : '';
+                alert(
+                    `⚠️ Prism Integrity Check\n\n` +
+                    `${missing.length} cached file(s) are missing or not stored:\n\n` +
+                    `${listPreview}${extra}\n\n` +
+                    `Prism may not work fully offline.\n` +
+                    `Go online and use "Re-cache All Assets" in Settings to fix this.`
+                );
+            } else {
+                setStatus('All assets verified ✓');
+            }
+
+            setTimeout(dismissLoader, missing.length > 0 ? 800 : 600);
         });
 
         function saveAppDataToIDB(key, value) {

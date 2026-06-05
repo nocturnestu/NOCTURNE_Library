@@ -2520,7 +2520,7 @@
 
             const PRISM_URLS = await (async () => {
                 try {
-                    const res = await fetch('/sw.js', { cache: 'no-store' });
+                    const res = await fetch('/sw.js').catch(() => caches.match('/sw.js'));
                     const text = await res.text();
                     const match = text.match(/const FULL_URLS\s*=\s*\[([\s\S]*?)\];/);
                     if (!match) return [];
@@ -2590,15 +2590,18 @@
             }));
 
             if (missing.length > 0) {
-                setStatus('Issues found');
-                const listPreview = missing.slice(0, 6).map(u => `  • ${u}`).join('\n');
-                const extra = missing.length > 6 ? `\n  ...and ${missing.length - 6} more` : '';
+                setStatus(`${missing.length} file(s) missing`);
+                const listPreview = missing.slice(0, 8).map(u => `  • ${u}`).join('\n');
+                const extra = missing.length > 8 ? `\n  ...and ${missing.length - 8} more` : '';
+                const severity = missing.length === 1
+                    ? '1 cached file is missing'
+                    : `${missing.length} cached files are missing`;
                 alert(
                     `Prism Integrity Check\n\n` +
-                    `${missing.length} cached file(s) are missing or not stored:\n\n` +
+                    `${severity}:\n\n` +
                     `${listPreview}${extra}\n\n` +
-                    `Prism may not work fully offline.\n` +
-                    `Go online and use "Refresh Prism" in Settings to fix this.`
+                    `Prism may not work correctly offline.\n` +
+                    `Go online and click "Refresh Prism" in Settings to fix this.`
                 );
             } else {
                 setStatus('All assets verified ✓');

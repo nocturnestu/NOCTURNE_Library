@@ -2594,17 +2594,17 @@
                 const listPreview = missing.slice(0, 6).map(u => `  • ${u}`).join('\n');
                 const extra = missing.length > 6 ? `\n  ...and ${missing.length - 6} more` : '';
                 alert(
-                    `⚠️ Prism Integrity Check\n\n` +
+                    `Prism Integrity Check\n\n` +
                     `${missing.length} cached file(s) are missing or not stored:\n\n` +
                     `${listPreview}${extra}\n\n` +
                     `Prism may not work fully offline.\n` +
-                    `Go online and use "Re-cache All Assets" in Settings to fix this.`
+                    `Go online and use "Refresh Prism" in Settings to fix this.`
                 );
             } else {
                 setStatus('All assets verified ✓');
             }
 
-            setTimeout(dismissLoader, missing.length > 0 ? 800 : 600);
+            setTimeout(dismissLoader, missing.length > 0 ? 2200 : 1600);
         });
 
         function saveAppDataToIDB(key, value) {

@@ -1544,6 +1544,39 @@
                 display: none !important;
             }
         }
+
+        #loader-skip-btn {
+            margin-top: 24px;
+            padding: 10px 28px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-sub);
+            border-radius: var(--r-pill);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            cursor: pointer;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.5s var(--ease-out), transform 0.5s var(--spring), background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+            pointer-events: none;
+            backdrop-filter: var(--blur-sm);
+        }
+        #loader-skip-btn.visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+        #loader-skip-btn:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.2);
+            color: var(--text);
+        }
+        #loader-skip-btn:active {
+            transform: scale(0.96);
+        }
     </style>
 </head>
 
@@ -1579,6 +1612,7 @@
             text-align: center;
             min-height: 16px;
         "></div>
+        <button id="loader-skip-btn" type="button">Skip Check</button>
     </div>
 
     <div class="page" id="page">
@@ -2518,87 +2552,144 @@
                 navigator.serviceWorker.register('/sw.js?standalone=true');
             }
 
+            let scanCancelled = false;
+            let scanTimeoutId = null;
+            const skipBtn = document.getElementById('loader-skip-btn');
+
+            const skipRevealTimer = setTimeout(() => {
+                if (skipBtn && !scanCancelled) skipBtn.classList.add('visible');
+            }, 6000);
+
+            scanTimeoutId = setTimeout(() => {
+                if (!scanCancelled) {
+                    scanCancelled = true;
+                    clearTimeout(skipRevealTimer);
+                    setStatus('Check timed out');
+                    dismissLoader();
+                }
+            }, 15000);
+
+            skipBtn?.addEventListener('click', () => {
+                if (scanCancelled) return;
+                scanCancelled = true;
+                clearTimeout(scanTimeoutId);
+                clearTimeout(skipRevealTimer);
+                setStatus('Skipped');
+                dismissLoader();
+            });
+
             const PRISM_URLS = await (async () => {
                 try {
-                    const res = await fetch('/sw.js').catch(() => caches.match('/sw.js'));
+                    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                        const chan = new MessageChannel();
+                        const ask = new Promise((res) => {
+                            chan.port1.onmessage = (e) => res(e.data?.urls || []);
+                            navigator.serviceWorker.controller.postMessage({ type: 'GET_FULL_URLS' }, [chan.port2]);
+                        });
+                        const fromSW = await Promise.race([
+                            ask,
+                            new Promise((r) => setTimeout(() => r([]), 2500))
+                        ]);
+                        if (fromSW.length) return fromSW;
+                    }
+                } catch (_) { }
+
+                try {
+                    const res = await fetch('/sw.js', { cache: 'no-store' }).catch(() => caches.match('/sw.js'));
+                    if (!res) return [];
                     const text = await res.text();
-                    const match = text.match(/const FULL_URLS\s*=\s*\[([\s\S]*?)\];/);
+                    const match = text.match(/const\s+FULL_URLS\s*=\s*\[([\s\S]*?)\];/);
                     if (!match) return [];
                     const raw = match[1].replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
-                    return [...raw.matchAll(/'([^']+)'/g)].map(m => m[1]);
+                    return [...raw.matchAll(/'([^']+)'/g)].map((m) => m[1]);
                 } catch (_) {
                     return [];
                 }
             })();
 
-            const origin = location.origin;
+            if (!PRISM_URLS.length || scanCancelled) {
+                if (!scanCancelled) dismissLoader();
+                return;
+            }
 
-            function resolveUrl(url) {
+            const origin = location.origin;
+            const resolveUrl = (url) => {
                 if (url.startsWith('http')) return url;
                 if (url === '/') return origin + '/';
                 return new URL(url, origin + '/').href;
+            };
+
+            let idbDb = null;
+            try {
+                idbDb = await new Promise((resolve, reject) => {
+                    const req = indexedDB.open('NOCTURNE_Studios_DB', 1);
+                    req.onsuccess = (e) => resolve(e.target.result);
+                    req.onerror = (e) => reject(e.target.error);
+                });
+            } catch (_) {
+                idbDb = null;
             }
 
-            async function checkCacheStorage(url) {
+            const checkIDB = (url) =>
+                new Promise((resolve) => {
+                    if (!idbDb) return resolve(false);
+                    try {
+                        const tx = idbDb.transaction('dynamic-cache', 'readonly');
+                        const store = tx.objectStore('dynamic-cache');
+                        const get = store.get(url);
+                        get.onsuccess = () => resolve(!!get.result);
+                        get.onerror = () => resolve(false);
+                    } catch (_) {
+                        resolve(false);
+                    }
+                });
+
+            const checkCache = async (url) => {
                 try {
-                    const keys = await caches.keys();
-                    for (const key of keys) {
+                    for (const key of await caches.keys()) {
                         const cache = await caches.open(key);
-                        const match = await cache.match(url);
-                        if (match) return true;
+                        if (await cache.match(url)) return true;
                     }
                 } catch (_) { }
                 return false;
-            }
-
-            async function checkIDB(url) {
-                return new Promise(resolve => {
-                    try {
-                        const req = indexedDB.open('NOCTURNE_Studios_DB', 1);
-                        req.onsuccess = e => {
-                            const db = e.target.result;
-                            try {
-                                const tx = db.transaction('dynamic-cache', 'readonly');
-                                const store = tx.objectStore('dynamic-cache');
-                                const get = store.get(url);
-                                get.onsuccess = () => resolve(!!get.result);
-                                get.onerror = () => resolve(false);
-                            } catch (_) { resolve(false); }
-                        };
-                        req.onerror = () => resolve(false);
-                    } catch (_) { resolve(false); }
-                });
-            }
+            };
 
             const missing = [];
             const total = PRISM_URLS.length;
             let checked = 0;
 
             setStatus('Checking cache...');
-            statusEl.style.opacity = '1';
 
-            await Promise.all(PRISM_URLS.map(async rawUrl => {
-                const url = resolveUrl(rawUrl);
-                const inCache = await checkCacheStorage(url);
-                const inIDB = inCache ? false : await checkIDB(url);
+            const BATCH = 5;
+            for (let i = 0; i < total; i += BATCH) {
+                if (scanCancelled) break;
+                const batch = PRISM_URLS.slice(i, i + BATCH);
+                await Promise.all(
+                    batch.map(async (rawUrl) => {
+                        if (scanCancelled) return;
+                        const url = resolveUrl(rawUrl);
+                        const inCache = await checkCache(url);
+                        const inIDB = inCache ? false : await checkIDB(url);
+                        if (!inCache && !inIDB) missing.push(rawUrl);
+                        checked++;
+                        setStatus(`Checking cache... ${Math.round((checked / total) * 100)}%`);
+                    })
+                );
+            }
 
-                if (!inCache && !inIDB) missing.push(rawUrl);
+            if (scanCancelled) return;
 
-                checked++;
-                const pct = Math.round((checked / total) * 100);
-                setStatus(`Checking cache... ${pct}%`);
-            }));
+            clearTimeout(scanTimeoutId);
+            clearTimeout(skipRevealTimer);
+            if (skipBtn) skipBtn.classList.remove('visible');
 
             if (missing.length > 0) {
                 setStatus(`${missing.length} file(s) missing`);
-                const listPreview = missing.slice(0, 8).map(u => `  • ${u}`).join('\n');
+                const listPreview = missing.slice(0, 8).map((u) => `  • ${u}`).join('\n');
                 const extra = missing.length > 8 ? `\n  ...and ${missing.length - 8} more` : '';
-                const severity = missing.length === 1
-                    ? '1 cached file is missing'
-                    : `${missing.length} cached files are missing`;
                 alert(
                     `Prism Integrity Check\n\n` +
-                    `${severity}:\n\n` +
+                    `${missing.length === 1 ? '1 cached file is missing' : `${missing.length} cached files are missing`}:\n\n` +
                     `${listPreview}${extra}\n\n` +
                     `Prism may not work correctly offline.\n` +
                     `Go online and click "Refresh Prism" in Settings to fix this.`

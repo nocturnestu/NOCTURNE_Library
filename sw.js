@@ -246,3 +246,9 @@ self.addEventListener('fetch', e => {
         }
     })());
 });
+
+self.addEventListener('message', (e) => {
+    if (e.data?.type === 'GET_FULL_URLS') {
+        e.ports?.[0]?.postMessage({ urls: FULL_URLS });
+    }
+});

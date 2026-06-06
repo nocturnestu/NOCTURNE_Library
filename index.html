@@ -2262,7 +2262,19 @@
                 navigator.serviceWorker.addEventListener('message', _cacheProgressHandler);
 
                 const swUrl = `/sw.js?update=${Date.now()}&standalone=${isStandalone}`;
-                await navigator.serviceWorker.register(swUrl);
+                const reg = await navigator.serviceWorker.register(swUrl);
+
+                await new Promise((resolve) => {
+                    if (reg.active) { resolve(); return; }
+                    const candidate = reg.installing || reg.waiting;
+                    if (!candidate) { resolve(); return; }
+                    candidate.addEventListener('statechange', function onState() {
+                        if (candidate.state === 'activated') {
+                            candidate.removeEventListener('statechange', onState);
+                            resolve();
+                        }
+                    });
+                });
 
                 try {
                     const swRes = await fetch('/sw.js', { cache: 'no-store' });
@@ -2783,6 +2795,27 @@
                         }
                     } else {
                         navigator.serviceWorker.register(`/sw.js?standalone=${isStandalone}`);
+                    }
+                    if ('serviceWorker' in navigator) {
+                        navigator.serviceWorker.addEventListener('message', (event) => {
+                            if (!event.data) return;
+
+                            if (event.data.type === 'STORAGE_PURGED') {
+                                const dlPage = document.getElementById('download-page');
+                                const dlTitle = document.getElementById('dl-phase-title');
+                                const dlSub = document.getElementById('dl-phase-sub');
+                                if (dlPage && !dlPage.classList.contains('open')) {
+                                    dlPage.classList.add('open');
+                                    if (dlTitle) dlTitle.textContent = 'SYNCING';
+                                    if (dlSub) dlSub.textContent = 'Storage was cleared externally';
+                                }
+                            }
+
+                            if (event.data.type === 'CACHE_PROGRESS' && !document.getElementById('download-page')?.classList.contains('open')) {
+                                const dlPage = document.getElementById('download-page');
+                                if (dlPage) dlPage.classList.add('open');
+                            }
+                        });
                     }
                 });
         }

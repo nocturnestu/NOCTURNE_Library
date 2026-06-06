@@ -1,4 +1,4 @@
-const CACHE_NAME = 'PRISM-v26.13';
+const CACHE_NAME = 'PRISM-v26.13.1';
 
 const FULL_URLS = [
     '/',
@@ -62,7 +62,7 @@ self.addEventListener('install', e => {
                 const progress = Math.round((processedAssets / totalAssets) * 100);
                 const clientsList = await self.clients.matchAll({ includeUncontrolled: true, type: 'window' });
                 for (const client of clientsList) {
-                    client.postMessage({ type: 'CACHE_PROGRESS', progress: progress });
+                    client.postMessage({ type: 'CACHE_PROGRESS', progress });
                 }
             }
 

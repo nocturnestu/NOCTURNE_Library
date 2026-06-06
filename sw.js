@@ -1,4 +1,4 @@
-const CACHE_NAME = 'PRISM-v26.13.1';
+const CACHE_NAME = 'PRISM-v26.12';
 
 const FULL_URLS = [
     '/',
@@ -40,7 +40,7 @@ const FULL_URLS = [
     'https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js',
     'https://cdn.babylonjs.com/ammo.js',
     'https://cdn.jsdelivr.net/npm/babylonjs-loaders@9.0.0/babylonjs.loaders.min.js',
-    'https://cdn.jsdelivr.net/npm/babylonjs-inspector@9.11.0/babylon.inspector-v2.bundle.min.js',
+    'https://cdn.jsdelivr.net/npm/babylonjs-inspector@9.0.0/babylon.inspector.bundle.js',
     'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
     'https://assets.babylonjs.com/textures/flare.png'
 ];
@@ -62,7 +62,7 @@ self.addEventListener('install', e => {
                 const progress = Math.round((processedAssets / totalAssets) * 100);
                 const clientsList = await self.clients.matchAll({ includeUncontrolled: true, type: 'window' });
                 for (const client of clientsList) {
-                    client.postMessage({ type: 'CACHE_PROGRESS', progress });
+                    client.postMessage({ type: 'CACHE_PROGRESS', progress: progress });
                 }
             }
 
@@ -140,17 +140,7 @@ self.addEventListener('install', e => {
 self.addEventListener('activate', e => {
     e.waitUntil(
         caches.keys().then(keys =>
-            Promise.all(
-                keys.filter(k => k !== CACHE_NAME).map(k => {
-                    return caches.delete(k).then(() => {
-                        return self.clients.matchAll().then(clients => {
-                            clients.forEach(client => {
-                                client.postMessage({ type: 'STORAGE_PURGED', source: 'SW_CACHE', name: k });
-                            });
-                        });
-                    });
-                })
-            )
+            Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
         )
     );
     self.clients.claim();
@@ -255,10 +245,4 @@ self.addEventListener('fetch', e => {
             return new Response('', { status: 503 });
         }
     })());
-});
-
-self.addEventListener('message', (e) => {
-    if (e.data?.type === 'GET_FULL_URLS') {
-        e.ports?.[0]?.postMessage({ urls: FULL_URLS });
-    }
 });

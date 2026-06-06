@@ -1,4 +1,4 @@
-const CACHE_NAME = 'PRISM-v26.12';
+const CACHE_NAME = 'PRISM-v26.13';
 
 const FULL_URLS = [
     '/',
@@ -40,7 +40,7 @@ const FULL_URLS = [
     'https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js',
     'https://cdn.babylonjs.com/ammo.js',
     'https://cdn.jsdelivr.net/npm/babylonjs-loaders@9.0.0/babylonjs.loaders.min.js',
-    'https://cdn.jsdelivr.net/npm/babylonjs-inspector@9.0.0/babylon.inspector.bundle.js',
+    'https://cdn.jsdelivr.net/npm/babylonjs-inspector@9.11.0/babylon.inspector-v2.bundle.min.js',
     'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
     'https://assets.babylonjs.com/textures/flare.png'
 ];
@@ -140,7 +140,17 @@ self.addEventListener('install', e => {
 self.addEventListener('activate', e => {
     e.waitUntil(
         caches.keys().then(keys =>
-            Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+            Promise.all(
+                keys.filter(k => k !== CACHE_NAME).map(k => {
+                    return caches.delete(k).then(() => {
+                        return self.clients.matchAll().then(clients => {
+                            clients.forEach(client => {
+                                client.postMessage({ type: 'STORAGE_PURGED', source: 'SW_CACHE', name: k });
+                            });
+                        });
+                    });
+                })
+            )
         )
     );
     self.clients.claim();

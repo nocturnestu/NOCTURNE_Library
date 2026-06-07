@@ -1544,6 +1544,116 @@
                 display: none !important;
             }
         }
+
+        @keyframes enter-down {
+            from { opacity: 0; transform: translateY(-18px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes enter-up {
+            from { opacity: 0; transform: translateY(22px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes enter-up-spring {
+            0%   { opacity: 0; transform: translateY(28px) scale(0.97); }
+            60%  { opacity: 1; transform: translateY(-4px) scale(1.008); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes enter-right {
+            from { opacity: 0; transform: translateX(32px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes enter-pop {
+            0%   { opacity: 0; transform: scale(0.82) translateY(10px); }
+            65%  { opacity: 1; transform: scale(1.04) translateY(-2px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        @keyframes enter-fade {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+        }
+
+        .page-revealed .topbar {
+            animation: enter-down 0.55s var(--ease-out) 0.05s both;
+        }
+        .page-revealed .hero-card {
+            animation: enter-up-spring 0.65s var(--ease-out) 0.15s both;
+        }
+        .page-revealed .section-header {
+            animation: enter-fade 0.45s ease 0.32s both;
+        }
+        .page-revealed .cards-grid .glass-card:nth-child(1) {
+            animation: enter-up-spring 0.55s var(--ease-out) 0.38s both;
+        }
+        .page-revealed .cards-grid .glass-card:nth-child(2) {
+            animation: enter-up-spring 0.55s var(--ease-out) 0.48s both;
+        }
+        .page-revealed .cards-grid .glass-card:nth-child(3) {
+            animation: enter-up-spring 0.55s var(--ease-out) 0.56s both;
+        }
+        .page-revealed .fs-footer {
+            animation: enter-fade 0.4s ease 0.62s both;
+        }
+        .page-revealed .shaman-socials-bar {
+            animation: enter-pop 0.5s var(--spring) 0.7s both;
+        }
+
+        .page-revealed .dt-topbar {
+            animation: enter-down 0.5s var(--ease-out) 0.05s both;
+        }
+        .page-revealed .dt-hero-avatar-wrap {
+            animation: enter-up 0.5s var(--ease-out) 0.18s both;
+        }
+        .page-revealed .dt-hero-title {
+            animation: enter-up 0.5s var(--ease-out) 0.26s both;
+        }
+        .page-revealed .dt-hero-status {
+            animation: enter-up 0.45s var(--ease-out) 0.32s both;
+        }
+        .page-revealed .dt-divider {
+            animation: enter-fade 0.4s ease 0.38s both;
+        }
+        .page-revealed .dt-hero-desc {
+            animation: enter-up 0.45s var(--ease-out) 0.42s both;
+        }
+        .page-revealed .desktop-left .cta-btn,
+        .page-revealed .desktop-left .install-btn {
+            animation: enter-up 0.45s var(--ease-out) 0.5s both;
+        }
+        .page-revealed .dt-footer {
+            animation: enter-fade 0.4s ease 0.58s both;
+        }
+        .page-revealed .desktop-right {
+            animation: enter-right 0.6s var(--ease-out) 0.22s both;
+        }
+        .page-revealed .dt-cards-grid .dt-glass-card:nth-child(1) {
+            animation: enter-up-spring 0.55s var(--ease-out) 0.35s both;
+        }
+        .page-revealed .dt-cards-grid .dt-glass-card:nth-child(2) {
+            animation: enter-up-spring 0.55s var(--ease-out) 0.45s both;
+        }
+        .page-revealed .dt-cards-grid .dt-glass-card:nth-child(3) {
+            animation: enter-up-spring 0.55s var(--ease-out) 0.53s both;
+        }
+
+        .no-anim .page-revealed .topbar,
+        .no-anim .page-revealed .hero-card,
+        .no-anim .page-revealed .section-header,
+        .no-anim .page-revealed .cards-grid .glass-card,
+        .no-anim .page-revealed .fs-footer,
+        .no-anim .page-revealed .shaman-socials-bar,
+        .no-anim .page-revealed .dt-topbar,
+        .no-anim .page-revealed .dt-hero-avatar-wrap,
+        .no-anim .page-revealed .dt-hero-title,
+        .no-anim .page-revealed .dt-hero-status,
+        .no-anim .page-revealed .dt-divider,
+        .no-anim .page-revealed .dt-hero-desc,
+        .no-anim .page-revealed .desktop-left .cta-btn,
+        .no-anim .page-revealed .desktop-left .install-btn,
+        .no-anim .page-revealed .dt-footer,
+        .no-anim .page-revealed .desktop-right,
+        .no-anim .page-revealed .dt-cards-grid .dt-glass-card {
+            animation: none;
+        }
     </style>
 </head>
 
@@ -1568,16 +1678,17 @@
         </div>
         <div id="loader-status" style="
             margin-top: 16px;
-            font-family: 'DM Sans', sans-serif;
-            font-size: 11px;
-            font-weight: 500;
-            letter-spacing: 2px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 3px;
             text-transform: uppercase;
-            color: rgba(200,202,228,0.45);
+            color: rgba(200,202,228,0.38);
             opacity: 0;
-            transition: opacity 0.4s ease;
+            transition: opacity 0.5s ease;
             text-align: center;
             min-height: 16px;
+            user-select: none;
         "></div>
     </div>
 
@@ -1715,7 +1826,7 @@
                         </div>
                         <div class="card-body">
                             <div class="card-title">Apps & Utilities</div>
-                            <div class="card-desc">Other NOCTURNE Works</div>
+                            <div class="card-desc">Experimental Web Pages</div>
                         </div>
                         <i class="material-icons-round card-arrow">chevron_right</i>
                     </div>
@@ -1742,7 +1853,7 @@
             <div class="library-header-wrap">
                 <h2 class="library-title">Games</h2>
             </div>
-            <p style="font-size: 13px; color: var(--text-sub); margin-bottom: 8px;">Interactive HTML projects, either 2D, 3D, etc.</p>
+            <p style="font-size: 13px; color: var(--text-sub); margin-bottom: 8px;">Our NOCTURNE flagships, built for interaction.</p>
     
             <div class="library-grid">
                 <a href="./SandBox3D/sb3d_page" class="list-item" onclick="createRipple(event)">
@@ -1799,7 +1910,7 @@
                     <i class="material-icons-round item-icon">web_asset</i>
                     <div class="item-content">
                         <div class="item-title">Objects Move or Nah</div>
-                        <div class="item-subtitle">ThreeJS Interaction</div>
+                        <div class="item-subtitle">ThreeJS Simulation</div>
                     </div>
                     <i class="material-icons-round item-arrow">chevron_right</i>
                 </a>
@@ -1807,14 +1918,14 @@
                     <i class="material-icons-round item-icon">web_asset</i>
                     <div class="item-content">
                         <div class="item-title">GIF Viewer</div>
-                        <div class="item-subtitle">View Loaded GIFs</div>
+                        <div class="item-subtitle">View GIFs by their links</div>
                     </div>
                     <i class="material-icons-round item-arrow">chevron_right</i>
                 </a>
                 <a href="./Other/mathlol" class="list-item" onclick="createRipple(event)">
                     <i class="material-icons-round item-icon">web_asset</i>
                     <div class="item-content">
-                        <div class="item-title">Math Quiz but Unhinged</div>
+                        <div class="item-title">Math or DIE</div>
                         <div class="item-subtitle">Random Math Generator</div>
                     </div>
                     <i class="material-icons-round item-arrow">chevron_right</i>
@@ -2149,6 +2260,75 @@
             cycleTip();
             const tipInterval = setInterval(cycleTip, 3000);
 
+            let freshVersion = null;
+            let watchdogTimer = null;
+            let finished = false;
+
+            function resetWatchdog() {
+                clearTimeout(watchdogTimer);
+                watchdogTimer = setTimeout(() => {
+                    if (finished) return;
+                    console.warn('SW comms watchdog: no progress in 20s, forcing reload');
+                    finished = true;
+                    clearInterval(tipInterval);
+                    dlTitle.textContent = 'STALLED';
+                    dlSub.textContent = 'Reloading anyway...';
+                    setTimeout(() => { window.location.reload(); }, 1500);
+                }, 20000);
+            }
+
+            if (_cacheProgressHandler && navigator.serviceWorker) {
+                navigator.serviceWorker.removeEventListener('message', _cacheProgressHandler);
+            }
+
+            _cacheProgressHandler = (event) => {
+                if (!event.data) return;
+                const { type, progress, processed, total, errors, url } = event.data;
+
+                if (type === 'CACHE_START') {
+                    resetWatchdog();
+                    dlBar.style.transition = 'width 0.15s linear';
+                    setPhase('dl-phase-download', 'active', `0 / ${total}`, 'sync');
+                    setPhase('dl-phase-cache', 'active', 'Writing', 'sync');
+                    dlTitle.textContent = 'DOWNLOADING';
+                    dlSub.textContent = `Fetching ${total} assets`;
+                    return;
+                }
+
+                if (type === 'CACHE_ERROR') {
+                    resetWatchdog();
+                    dlSub.textContent = `${errors} error${errors !== 1 ? 's' : ''} so far`;
+                    return;
+                }
+
+                if (type === 'CACHE_PROGRESS') {
+                    resetWatchdog();
+                    dlBar.style.width = progress + '%';
+
+                    if (progress > 0 && progress < 100) {
+                        setPhase('dl-phase-download', 'active', `${processed} / ${total}`, 'sync');
+                        dlTitle.textContent = 'CACHING';
+                        dlSub.textContent = `${progress}%${errors > 0 ? ` · ${errors} skipped` : ''}`;
+                    }
+
+                    if (progress >= 100) {
+                        finished = true;
+                        clearTimeout(watchdogTimer);
+                        clearInterval(tipInterval);
+                        navigator.serviceWorker.removeEventListener('message', _cacheProgressHandler);
+                        setPhase('dl-phase-download', 'done', 'Done', 'check_circle');
+                        setPhase('dl-phase-cache', errors > 0 ? 'error' : 'done', errors > 0 ? `${errors} skipped` : 'Done', errors > 0 ? 'warning' : 'check_circle');
+                        dlTitle.textContent = 'COMPLETE';
+                        dlSub.textContent = errors > 0 ? `Done with ${errors} skip${errors !== 1 ? 's' : ''}` : 'All assets cached';
+                        if (freshVersion) localStorage.setItem('PRISM_SW_VERSION', freshVersion);
+                        setTimeout(() => { window.location.reload(); }, 1200);
+                    }
+                }
+            };
+
+            navigator.serviceWorker.addEventListener('message', _cacheProgressHandler);
+            resetWatchdog();
+
             try {
                 dlTitle.textContent = 'CLEARING';
                 dlSub.textContent = 'Purging old cache & storage';
@@ -2188,61 +2368,26 @@
                 });
 
                 setPhase('dl-phase-clear', 'done', 'Done', 'check_circle');
-
                 dlTitle.textContent = 'DOWNLOADING';
-                dlSub.textContent = 'All assets';
-                setPhase('dl-phase-download', 'active', 'Fetching', 'sync');
-                dlBar.style.transition = 'width 0.1s linear';
-
-                if (_cacheProgressHandler && navigator.serviceWorker) {
-                    navigator.serviceWorker.removeEventListener('message', _cacheProgressHandler);
-                }
-
-                let freshVersion = null;
-
-                _cacheProgressHandler = (event) => {
-                    if (!event.data || event.data.type !== 'CACHE_PROGRESS') return;
-                    const progress = event.data.progress || 0;
-                    dlBar.style.width = progress + '%';
-
-                    if (progress > 0 && progress < 100) {
-                        setPhase('dl-phase-download', 'active', `${progress}%`, 'sync');
-                        setPhase('dl-phase-cache', 'active', 'Writing', 'sync');
-                        dlTitle.textContent = 'CACHING';
-                        dlSub.textContent = `${progress}% complete`;
-                    }
-
-                    if (progress >= 100) {
-                        navigator.serviceWorker.removeEventListener('message', _cacheProgressHandler);
-                        setPhase('dl-phase-download', 'done', 'Done', 'check_circle');
-                        setPhase('dl-phase-cache', 'done', 'Done', 'check_circle');
-                        dlTitle.textContent = 'COMPLETE';
-                        dlSub.textContent = 'Reloading...';
-                        clearInterval(tipInterval);
-                        if (freshVersion) {
-                            localStorage.setItem('PRISM_SW_VERSION', freshVersion);
-                        }
-                        setTimeout(() => { window.location.reload(); }, 1000);
-                    }
-                };
-                navigator.serviceWorker.addEventListener('message', _cacheProgressHandler);
-
-                const swUrl = `/sw.js?update=${Date.now()}&standalone=${isStandalone}`;
-                await navigator.serviceWorker.register(swUrl);
+                dlSub.textContent = 'Starting up...';
+                setPhase('dl-phase-download', 'active', 'Starting', 'sync');
 
                 try {
                     const swRes = await fetch('/sw.js', { cache: 'no-store' });
                     const swText = await swRes.text();
                     const vMatch = swText.match(/const CACHE_NAME\s*=\s*['"](.+?)['"]/);
-                    if (vMatch) {
-                        freshVersion = vMatch[1];
-                    }
+                    if (vMatch) freshVersion = vMatch[1];
                 } catch (_) { }
+
+                const swUrl = `/sw.js?update=${Date.now()}&standalone=${isStandalone}`;
+                await navigator.serviceWorker.register(swUrl);
 
             } catch (err) {
                 console.error('Error during re-cache:', err);
-                setPhase('dl-phase-clear', 'error', 'Failed', 'error');
+                finished = true;
+                clearTimeout(watchdogTimer);
                 clearInterval(tipInterval);
+                setPhase('dl-phase-clear', 'error', 'Failed', 'error');
                 setTimeout(() => { window.location.reload(); }, 1500);
             }
         }
@@ -2472,7 +2617,7 @@
             el.appendChild(circle);
         }
 
-        window.addEventListener('load', async function () {
+        window.addEventListener('load', function () {
             var loader = document.getElementById('startup-loader');
             var ring = document.getElementById('loader-ring');
             var wordmark = document.getElementById('loader-wordmark');
@@ -2484,20 +2629,35 @@
             const isStandalone = window.matchMedia('(display-mode: standalone)').matches
                 || navigator.standalone === true;
 
+            const taglines = [
+                'Initializing Prism',
+                'Warming up the lab',
+                'Loading the void',
+                'Booting NOCTURNE',
+                'Charging the grid',
+            ];
+
             function setStatus(text) {
                 if (!statusEl) return;
                 statusEl.style.opacity = '0';
                 setTimeout(() => {
                     statusEl.textContent = text;
                     statusEl.style.opacity = '1';
-                }, 200);
+                }, 250);
             }
 
             function dismissLoader() {
                 loader.style.opacity = '0';
                 page.style.opacity = '1';
-                setTimeout(() => { loader.style.display = 'none'; }, 700);
+                page.classList.add('page-revealed');
+                loader.style.pointerEvents = 'none';
+                setTimeout(() => {
+                    loader.style.display = 'none';
+                }, 700);
             }
+
+            setStatus(taglines[Math.floor(Math.random() * taglines.length)]);
+            statusEl.style.opacity = '1';
 
             setTimeout(() => ring.classList.add('show'), 250);
             setTimeout(() => wordmark.classList.add('show'), 750);
@@ -2506,108 +2666,27 @@
                 setTimeout(() => bar.classList.add('fill'), 60);
             }, 1050);
 
-            if (!isStandalone) {
-                if ('serviceWorker' in navigator) {
-                    navigator.serviceWorker.register('/sw.js');
-                }
-                setTimeout(dismissLoader, 2600);
-                return;
-            }
-
             if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('/sw.js?standalone=true');
+                navigator.serviceWorker.register(
+                    isStandalone ? '/sw.js?standalone=true' : '/sw.js'
+                );
             }
 
-            const PRISM_URLS = await (async () => {
-                try {
-                    const res = await fetch('/sw.js').catch(() => caches.match('/sw.js'));
-                    const text = await res.text();
-                    const match = text.match(/const FULL_URLS\s*=\s*\[([\s\S]*?)\];/);
-                    if (!match) return [];
-                    const raw = match[1].replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
-                    return [...raw.matchAll(/'([^']+)'/g)].map(m => m[1]);
-                } catch (_) {
-                    return [];
-                }
-            })();
-
-            const origin = location.origin;
-
-            function resolveUrl(url) {
-                if (url.startsWith('http')) return url;
-                if (url === '/') return origin + '/';
-                return new URL(url, origin + '/').href;
-            }
-
-            async function checkCacheStorage(url) {
-                try {
-                    const keys = await caches.keys();
-                    for (const key of keys) {
-                        const cache = await caches.open(key);
-                        const match = await cache.match(url);
-                        if (match) return true;
+            if (navigator.serviceWorker) {
+                navigator.serviceWorker.addEventListener('message', function (e) {
+                    if (e.data && e.data.type === 'CACHE_PROGRESS') {
+                        const pct = e.data.progress;
+                        bar.style.transition = 'width 0.4s ease';
+                        bar.style.width = pct + '%';
+                        if (pct >= 100) {
+                            setStatus('Ready');
+                            setTimeout(dismissLoader, 800);
+                        }
                     }
-                } catch (_) { }
-                return false;
-            }
-
-            async function checkIDB(url) {
-                return new Promise(resolve => {
-                    try {
-                        const req = indexedDB.open('NOCTURNE_Studios_DB', 1);
-                        req.onsuccess = e => {
-                            const db = e.target.result;
-                            try {
-                                const tx = db.transaction('dynamic-cache', 'readonly');
-                                const store = tx.objectStore('dynamic-cache');
-                                const get = store.get(url);
-                                get.onsuccess = () => resolve(!!get.result);
-                                get.onerror = () => resolve(false);
-                            } catch (_) { resolve(false); }
-                        };
-                        req.onerror = () => resolve(false);
-                    } catch (_) { resolve(false); }
                 });
             }
 
-            const missing = [];
-            const total = PRISM_URLS.length;
-            let checked = 0;
-
-            setStatus('Checking cache...');
-            statusEl.style.opacity = '1';
-
-            await Promise.all(PRISM_URLS.map(async rawUrl => {
-                const url = resolveUrl(rawUrl);
-                const inCache = await checkCacheStorage(url);
-                const inIDB = inCache ? false : await checkIDB(url);
-
-                if (!inCache && !inIDB) missing.push(rawUrl);
-
-                checked++;
-                const pct = Math.round((checked / total) * 100);
-                setStatus(`Checking cache... ${pct}%`);
-            }));
-
-            if (missing.length > 0) {
-                setStatus(`${missing.length} file(s) missing`);
-                const listPreview = missing.slice(0, 8).map(u => `  • ${u}`).join('\n');
-                const extra = missing.length > 8 ? `\n  ...and ${missing.length - 8} more` : '';
-                const severity = missing.length === 1
-                    ? '1 cached file is missing'
-                    : `${missing.length} cached files are missing`;
-                alert(
-                    `Prism Integrity Check\n\n` +
-                    `${severity}:\n\n` +
-                    `${listPreview}${extra}\n\n` +
-                    `Prism may not work correctly offline.\n` +
-                    `Go online and click "Refresh Prism" in Settings to fix this.`
-                );
-            } else {
-                setStatus('All assets verified ✓');
-            }
-
-            setTimeout(dismissLoader, missing.length > 0 ? 2200 : 1600);
+            setTimeout(dismissLoader, isStandalone ? 3200 : 2400);
         });
 
         function saveAppDataToIDB(key, value) {

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'PRISM-v26.12';
+const CACHE_NAME = 'PRISM-v26.12.2';
 
 const FULL_URLS = [
     '/',
@@ -36,11 +36,11 @@ const FULL_URLS = [
     'https://fonts.googleapis.com/icon?family=Material+Icons+Round',
     'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/nocturneassets/logo192.png',
     'https://cdnjs.cloudflare.com/ajax/libs/phaser/3.60.0/phaser.min.js',
-    'https://cdn.jsdelivr.net/npm/babylonjs@9.0.0/babylon.js',
+    'https://cdn.jsdelivr.net/npm/babylonjs@9.11.0/babylon.js',
     'https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js',
     'https://cdn.babylonjs.com/ammo.js',
-    'https://cdn.jsdelivr.net/npm/babylonjs-loaders@9.0.0/babylonjs.loaders.min.js',
-    'https://cdn.jsdelivr.net/npm/babylonjs-inspector@9.0.0/babylon.inspector.bundle.js',
+    'https://cdn.jsdelivr.net/npm/babylonjs-loaders@9.11.0/babylonjs.loaders.min.js',
+    'https://cdn.jsdelivr.net/npm/babylonjs-inspector@9.11.0/babylon.inspector.bundle.js',
     'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
     'https://assets.babylonjs.com/textures/flare.png'
 ];
@@ -55,16 +55,21 @@ self.addEventListener('install', e => {
     e.waitUntil(
         caches.open(CACHE_NAME).then(async (cache) => {
             let processedAssets = 0;
+            let errorCount = 0;
             const totalAssets = urlsToCache.length;
+
+            async function broadcast(msg) {
+                const clientsList = await self.clients.matchAll({ includeUncontrolled: true, type: 'window' });
+                for (const client of clientsList) client.postMessage(msg);
+            }
 
             async function broadcastProgress() {
                 processedAssets++;
                 const progress = Math.round((processedAssets / totalAssets) * 100);
-                const clientsList = await self.clients.matchAll({ includeUncontrolled: true, type: 'window' });
-                for (const client of clientsList) {
-                    client.postMessage({ type: 'CACHE_PROGRESS', progress: progress });
-                }
+                await broadcast({ type: 'CACHE_PROGRESS', progress, processed: processedAssets, total: totalAssets, errors: errorCount });
             }
+
+            await broadcast({ type: 'CACHE_START', total: totalAssets });
 
             const downloadTasks = urlsToCache.map(async (url) => {
                 const absoluteUrl = new URL(url, self.location.origin).href;
@@ -126,6 +131,8 @@ self.addEventListener('install', e => {
                     }
                 } catch (err) {
                     console.error("Precaching error for:", absoluteUrl, err);
+                    errorCount++;
+                    await broadcast({ type: 'CACHE_ERROR', url: absoluteUrl, errors: errorCount });
                     await deleteIDBData(absoluteUrl).catch(() => { });
                 } finally {
                     await broadcastProgress();

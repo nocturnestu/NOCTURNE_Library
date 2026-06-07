@@ -1547,112 +1547,29 @@
 
         @keyframes enter-down {
             from { opacity: 0; transform: translateY(-18px); }
-            to   { opacity: 1; transform: translateY(0); }
+            to   { opacity: 1; transform: none; }
         }
         @keyframes enter-up {
             from { opacity: 0; transform: translateY(22px); }
-            to   { opacity: 1; transform: translateY(0); }
+            to   { opacity: 1; transform: none; }
         }
         @keyframes enter-up-spring {
             0%   { opacity: 0; transform: translateY(28px) scale(0.97); }
             60%  { opacity: 1; transform: translateY(-4px) scale(1.008); }
-            100% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 1; transform: none; }
         }
         @keyframes enter-right {
             from { opacity: 0; transform: translateX(32px); }
-            to   { opacity: 1; transform: translateX(0); }
+            to   { opacity: 1; transform: none; }
         }
         @keyframes enter-pop {
             0%   { opacity: 0; transform: scale(0.82) translateY(10px); }
             65%  { opacity: 1; transform: scale(1.04) translateY(-2px); }
-            100% { opacity: 1; transform: scale(1) translateY(0); }
+            100% { opacity: 1; transform: none; }
         }
         @keyframes enter-fade {
             from { opacity: 0; }
             to   { opacity: 1; }
-        }
-
-        .page-revealed .topbar {
-            animation: enter-down 0.55s var(--ease-out) 0.05s both;
-        }
-        .page-revealed .hero-card {
-            animation: enter-up-spring 0.65s var(--ease-out) 0.15s both;
-        }
-        .page-revealed .section-header {
-            animation: enter-fade 0.45s ease 0.32s both;
-        }
-        .page-revealed .cards-grid .glass-card:nth-child(1) {
-            animation: enter-up-spring 0.55s var(--ease-out) 0.38s both;
-        }
-        .page-revealed .cards-grid .glass-card:nth-child(2) {
-            animation: enter-up-spring 0.55s var(--ease-out) 0.48s both;
-        }
-        .page-revealed .cards-grid .glass-card:nth-child(3) {
-            animation: enter-up-spring 0.55s var(--ease-out) 0.56s both;
-        }
-        .page-revealed .fs-footer {
-            animation: enter-fade 0.4s ease 0.62s both;
-        }
-        .page-revealed .shaman-socials-bar {
-            animation: enter-pop 0.5s var(--spring) 0.7s both;
-        }
-
-        .page-revealed .dt-topbar {
-            animation: enter-down 0.5s var(--ease-out) 0.05s both;
-        }
-        .page-revealed .dt-hero-avatar-wrap {
-            animation: enter-up 0.5s var(--ease-out) 0.18s both;
-        }
-        .page-revealed .dt-hero-title {
-            animation: enter-up 0.5s var(--ease-out) 0.26s both;
-        }
-        .page-revealed .dt-hero-status {
-            animation: enter-up 0.45s var(--ease-out) 0.32s both;
-        }
-        .page-revealed .dt-divider {
-            animation: enter-fade 0.4s ease 0.38s both;
-        }
-        .page-revealed .dt-hero-desc {
-            animation: enter-up 0.45s var(--ease-out) 0.42s both;
-        }
-        .page-revealed .desktop-left .cta-btn,
-        .page-revealed .desktop-left .install-btn {
-            animation: enter-up 0.45s var(--ease-out) 0.5s both;
-        }
-        .page-revealed .dt-footer {
-            animation: enter-fade 0.4s ease 0.58s both;
-        }
-        .page-revealed .desktop-right {
-            animation: enter-right 0.6s var(--ease-out) 0.22s both;
-        }
-        .page-revealed .dt-cards-grid .dt-glass-card:nth-child(1) {
-            animation: enter-up-spring 0.55s var(--ease-out) 0.35s both;
-        }
-        .page-revealed .dt-cards-grid .dt-glass-card:nth-child(2) {
-            animation: enter-up-spring 0.55s var(--ease-out) 0.45s both;
-        }
-        .page-revealed .dt-cards-grid .dt-glass-card:nth-child(3) {
-            animation: enter-up-spring 0.55s var(--ease-out) 0.53s both;
-        }
-
-        .no-anim .page-revealed .topbar,
-        .no-anim .page-revealed .hero-card,
-        .no-anim .page-revealed .section-header,
-        .no-anim .page-revealed .cards-grid .glass-card,
-        .no-anim .page-revealed .fs-footer,
-        .no-anim .page-revealed .shaman-socials-bar,
-        .no-anim .page-revealed .dt-topbar,
-        .no-anim .page-revealed .dt-hero-avatar-wrap,
-        .no-anim .page-revealed .dt-hero-title,
-        .no-anim .page-revealed .dt-hero-status,
-        .no-anim .page-revealed .dt-divider,
-        .no-anim .page-revealed .dt-hero-desc,
-        .no-anim .page-revealed .desktop-left .cta-btn,
-        .no-anim .page-revealed .desktop-left .install-btn,
-        .no-anim .page-revealed .dt-footer,
-        .no-anim .page-revealed .desktop-right,
-        .no-anim .page-revealed .dt-cards-grid .dt-glass-card {
-            animation: none;
         }
     </style>
 </head>
@@ -2649,11 +2566,7 @@
             function dismissLoader() {
                 loader.style.opacity = '0';
                 page.style.opacity = '1';
-                page.classList.add('page-revealed');
-                loader.style.pointerEvents = 'none';
-                setTimeout(() => {
-                    loader.style.display = 'none';
-                }, 700);
+                setTimeout(() => { loader.style.display = 'none'; }, 700);
             }
 
             setStatus(taglines[Math.floor(Math.random() * taglines.length)]);

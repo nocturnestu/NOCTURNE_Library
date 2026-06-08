@@ -1,4 +1,4 @@
-const CACHE_NAME = 'PRISM-v26.12.2';
+const CACHE_NAME = 'PRISM-v26.13';
 
 const FULL_URLS = [
     '/',
@@ -16,6 +16,7 @@ const FULL_URLS = [
     'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/nocturneassets/logo.png',
     'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/nocturneassets/logo2.png',
     'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/sb3dfavicon.svg',
+    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/nocturneassets/prism-nav.js',
     'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/sb3dammo.js',
     'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/sb3dmatyou.js',
     'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/sb3duianim_pc.js',
@@ -219,6 +220,19 @@ self.addEventListener('fetch', e => {
 
     if (isStandalone && url.includes('giphy.com')) {
         e.respondWith(fetch(e.request));
+        return;
+    }
+
+    if (e.request.headers.get('accept')?.includes('text/html')) {
+        e.respondWith((async () => {
+            const res = await caches.match(e.request) || await fetch(e.request);
+            const text = await res.clone().text();
+            const injected = text.replace('</body>',
+                '<script src="https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/nocturneassets/prism-nav.js"><\/script></body>');
+            return new Response(injected, {
+                headers: { 'Content-Type': 'text/html' }
+            });
+        })());
         return;
     }
 

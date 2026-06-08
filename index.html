@@ -1571,6 +1571,59 @@
             from { opacity: 0; }
             to   { opacity: 1; }
         }
+
+        #recache-game-toggle {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            background: rgba(20, 20, 36, 0.5);
+            border: 1px solid var(--border);
+            padding: 11px 16px;
+            border-radius: var(--r-md);
+            margin-top: 8px;
+            cursor: pointer;
+            transition: background 0.2s ease, border-color 0.2s ease;
+            user-select: none;
+        }
+
+        #recache-game-toggle:hover {
+            background: var(--surface-hover);
+            border-color: var(--border-strong);
+        }
+
+        #recache-game-toggle .item-content {
+            flex: 1;
+        }
+
+        #recache-game-toggle .item-title {
+            font-size: 13px;
+            font-weight: 500;
+            letter-spacing: 0.2px;
+            margin-bottom: 1px;
+        }
+
+        #recache-game-toggle .item-subtitle {
+            font-size: 11px;
+            color: var(--text-sub);
+        }
+
+        #icon-include-games {
+            font-size: 22px;
+            color: var(--text-muted);
+            transition: color 0.2s ease, text-shadow 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        #icon-include-games.toggle-on {
+            color: var(--primary);
+            text-shadow: 0 0 6px var(--primary-glow);
+        }
+
+        @media not all and (display-mode: standalone) {
+            #recache-game-toggle {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 
@@ -1934,6 +1987,14 @@
             </div>
         </button>
 
+        <div id="recache-game-toggle" onclick="toggleIncludeGames()">
+            <i class="material-icons-round" id="icon-include-games">toggle_off</i>
+            <div class="item-content">
+                <div class="item-title">Include Game Assets</div>
+                <div class="item-subtitle">Also recaches SB3D, RR2D, engines & audio</div>
+            </div>
+        </div>
+
         <div id="sw-version-display" style="display: none; position: absolute; top: 16px; right: 20px; font-size: 11px; opacity: 0.35; font-family: 'Space Grotesk', sans-serif; pointer-events: none; user-select: none;"></div>
     </div>
 
@@ -2077,8 +2138,18 @@
             });
         })();
 
+        let _includeGames = false;
+
+        function toggleIncludeGames() {
+            _includeGames = !_includeGames;
+            const icon = document.getElementById('icon-include-games');
+            icon.textContent = _includeGames ? 'toggle_on' : 'toggle_off';
+            icon.classList.toggle('toggle-on', _includeGames);
+        }
+
         function confirmAndRecache() {
-            if (!confirm(`Download Mode\nCAUTION!\n\nThis will purge current assets and re-download everything.\n\nClick OK to proceed\nClick Cancel to do nothing`)) return;
+            const gameWarning = _includeGames ? '\n\nGame assets included (~200MB+).' : '\n\nCore files only. Game assets excluded.';
+            if (!confirm(`Download Mode\nCAUTION!\n\nThis will purge current assets and re-download everything.${gameWarning}\n\nClick OK to proceed\nClick Cancel to do nothing`)) return;
             clearAndRecache('full');
         }
 
@@ -2296,7 +2367,7 @@
                     if (vMatch) freshVersion = vMatch[1];
                 } catch (_) { }
 
-                const swUrl = `/sw.js?update=${Date.now()}&standalone=${isStandalone}`;
+                const swUrl = `/sw.js?update=${Date.now()}&standalone=${isStandalone}&includeGames=${_includeGames}`;
                 await navigator.serviceWorker.register(swUrl);
 
             } catch (err) {
@@ -2581,7 +2652,7 @@
 
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register(
-                    isStandalone ? '/sw.js?standalone=true' : '/sw.js'
+                    `/sw.js?standalone=${isStandalone}&includeGames=true`
                 );
             }
 
@@ -2680,10 +2751,10 @@
                             }
                         } else {
                             localStorage.setItem(SW_VERSION_KEY, liveVersion);
-                            navigator.serviceWorker.register(`/sw.js?standalone=${isStandalone}`);
+                            navigator.serviceWorker.register(`/sw.js?standalone=${isStandalone}&includeGames=true`);
                         }
                     } else {
-                        navigator.serviceWorker.register(`/sw.js?standalone=${isStandalone}`);
+                        navigator.serviceWorker.register(`/sw.js?standalone=${isStandalone}&includeGames=true`);
                     }
                 });
         }

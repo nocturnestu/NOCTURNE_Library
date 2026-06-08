@@ -2322,9 +2322,69 @@
                 dlSub.textContent = 'Purging old cache & storage';
                 setPhase('dl-phase-clear', 'active', 'Running', 'sync');
 
+                const CORE_URLS = [
+                    '/',
+                    '/index.html',
+                    './SandBox3D/sb3d_page',
+                    './RiftRunners2D/rr2d_page',
+                    './RiftRunners2D/RiftRunners2D',
+                    './SandBox3D/SandBox3D_PC',
+                    './SandBox3D/SandBox3D_Mobile',
+                    './Other/ismycompteureron',
+                    './Other/devcheck',
+                    './Other/notmoving',
+                    './Other/gifview',
+                    './Other/mathlol',
+                    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/nocturneassets/logo.png',
+                    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/nocturneassets/logo2.png',
+                    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/nocturneassets/logo192.png',
+                    'https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Space+Grotesk:wght@300;400;500;600;700&display=swap',
+                    'https://fonts.googleapis.com/icon?family=Material+Icons+Round',
+                ];
+                const GAME_URLS = [
+                    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/sb3dfavicon.svg',
+                    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/sb3dammo.js',
+                    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/sb3dmatyou.js',
+                    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/sb3duianim_pc.js',
+                    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/sb3duianim_mobile.js',
+                    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/gahdayum.mp4',
+                    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/bomboclat.mp3',
+                    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/neutral/neu1.mp3',
+                    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/neutral/neu2.mp3',
+                    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/neutral/neu3.mp3',
+                    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/evening/eve1.mp3',
+                    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/evening/eve2.mp3',
+                    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/evening/eve3.mp3',
+                    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/midnight/mid1.mp3',
+                    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/midnight/mid2.mp3',
+                    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/midnight/mid3.mp3',
+                    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/midnight/mid4.mp3',
+                    'https://cdnjs.cloudflare.com/ajax/libs/phaser/3.60.0/phaser.min.js',
+                    'https://cdn.jsdelivr.net/npm/babylonjs@9.11.0/babylon.js',
+                    'https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js',
+                    'https://cdn.babylonjs.com/ammo.js',
+                    'https://cdn.jsdelivr.net/npm/babylonjs-loaders@9.11.0/babylonjs.loaders.min.js',
+                    'https://cdn.jsdelivr.net/npm/babylonjs-inspector@9.11.0/babylon.inspector.bundle.js',
+                    'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
+                    'https://assets.babylonjs.com/textures/flare.png',
+                ];
+
+                const urlsToPurge = _includeGames ? [...CORE_URLS, ...GAME_URLS] : CORE_URLS;
+                const absoluteUrlsToPurge = urlsToPurge.map(u => new URL(u, location.origin).href);
+
                 if ('caches' in window) {
-                    const keys = await caches.keys();
-                    await Promise.all(keys.map(k => caches.delete(k)));
+                    const cacheKeys = await caches.keys();
+                    await Promise.all(cacheKeys.map(async (cacheName) => {
+                        const cache = await caches.open(cacheName);
+                        const requests = await cache.keys();
+                        await Promise.all(
+                            requests
+                                .filter(req => absoluteUrlsToPurge.includes(req.url))
+                                .map(req => cache.delete(req))
+                        );
+                        const remaining = await cache.keys();
+                        if (remaining.length === 0) await caches.delete(cacheName);
+                    }));
                 }
 
                 if ('serviceWorker' in navigator) {
@@ -2333,26 +2393,29 @@
                 }
 
                 await new Promise((resolve) => {
-                    const openReq = indexedDB.open('NOCTURNE_Studios_DB');
+                    const openReq = indexedDB.open('NOCTURNE_Studios_DB', 1);
                     openReq.onsuccess = (e) => {
                         const db = e.target.result;
-                        db.close();
-                        const delReq = indexedDB.deleteDatabase('NOCTURNE_Studios_DB');
-                        delReq.onsuccess = () => resolve();
-                        delReq.onerror = () => { console.warn('IDB delete error, proceeding'); resolve(); };
-                        delReq.onblocked = () => {
-                            console.warn('IDB delete blocked — forcing close and retrying');
-                            db.close();
-                            const retryDel = indexedDB.deleteDatabase('NOCTURNE_Studios_DB');
-                            retryDel.onsuccess = () => resolve();
-                            retryDel.onerror = () => resolve();
+                        const tx = db.transaction('dynamic-cache', 'readwrite');
+                        const store = tx.objectStore('dynamic-cache');
+                        const cursorReq = store.openCursor();
+                        const deletePromises = [];
+                        cursorReq.onsuccess = (ev) => {
+                            const cursor = ev.target.result;
+                            if (!cursor) return;
+                            if (absoluteUrlsToPurge.includes(cursor.key)) {
+                                deletePromises.push(new Promise((res) => {
+                                    const del = cursor.delete();
+                                    del.onsuccess = res;
+                                    del.onerror = res;
+                                }));
+                            }
+                            cursor.continue();
                         };
+                        tx.oncomplete = () => { db.close(); resolve(); };
+                        tx.onerror = () => { db.close(); resolve(); };
                     };
-                    openReq.onerror = () => {
-                        const delReq = indexedDB.deleteDatabase('NOCTURNE_Studios_DB');
-                        delReq.onsuccess = () => resolve();
-                        delReq.onerror = () => resolve();
-                    };
+                    openReq.onerror = () => resolve();
                 });
 
                 setPhase('dl-phase-clear', 'done', 'Done', 'check_circle');

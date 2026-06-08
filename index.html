@@ -2148,7 +2148,7 @@
         }
 
         function confirmAndRecache() {
-            const gameWarning = _includeGames ? '\n\nGame assets included (~200MB+).' : '\n\nCore files only. Game assets excluded.';
+            const gameWarning = _includeGames ? '\n\nGame assets included for download.' : '\n\nCore files only. Game assets excluded.';
             if (!confirm(`Download Mode\nCAUTION!\n\nThis will purge current assets and re-download everything.${gameWarning}\n\nClick OK to proceed\nClick Cancel to do nothing`)) return;
             clearAndRecache('full');
         }

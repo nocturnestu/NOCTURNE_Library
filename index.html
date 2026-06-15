@@ -1648,10 +1648,6 @@
             }
         }
 
-        .dt-cards-grid .changelog-card {
-            grid-column: 1 / -1;
-        }
-
         .changelog-card::before {
             content: '';
             position: absolute;
@@ -1688,11 +1684,6 @@
             line-height: 1.6;
         }
 
-        .changelog-card.expanded .changelog-content,
-        .dt-cards-grid .changelog-card:hover .changelog-content {
-            grid-template-rows: 1fr;
-        }
-
         .changelog-title-row {
             flex: 1;
             min-width: 0;
@@ -1717,11 +1708,19 @@
             transition: transform 0.4s var(--spring), color 0.2s ease;
         }
 
+        .changelog-card.expanded .changelog-content,
+        .desktop-left .changelog-card:hover .changelog-content,
+        .hero-card .changelog-card:hover .changelog-content {
+            grid-template-rows: 1fr;
+        }
+
         .changelog-card.expanded .card-arrow,
-        .dt-cards-grid .changelog-card:hover .card-arrow {
+        .desktop-left .changelog-card:hover .card-arrow,
+        .hero-card .changelog-card:hover .card-arrow {
             transform: rotate(180deg);
             color: #4ade80;
         }
+
     </style>
 </head>
 
@@ -1785,6 +1784,25 @@
                         </div>
                     </div>
                 </div>
+                <div class="changelog-card" id="changelog-mobile" onclick="this.classList.toggle('expanded'); createRipple(event)"
+                    style="margin-top:14px;">
+                    <div class="changelog-header">
+                        <div class="card-icon-wrap"
+                            style="background: linear-gradient(145deg, rgba(74, 222, 128, 0.22), rgba(74, 222, 128, 0.06)); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.2);">
+                            <i class="material-icons-round">campaign</i>
+                        </div>
+                        <div class="changelog-title-row">
+                            <div class="changelog-version" id="cl-version-mobile">LOADING...</div>
+                            <div class="changelog-title" id="cl-title-mobile">What changed here?</div>
+                        </div>
+                        <i class="material-icons-round card-arrow">expand_more</i>
+                    </div>
+                    <div class="changelog-content">
+                        <div class="changelog-content-inner" id="cl-msg-mobile">
+                            Fetching the latest brainrot from the lab...
+                        </div>
+                    </div>
+                </div>
                 <div class="hero-divider"></div>
                 <p class="hero-desc">
                     Independent experimental lab building <strong>browser-native 3D</strong> experiences, interactive
@@ -1806,25 +1824,6 @@
             <div class="section-header">
                 <span class="section-label">Projects</span>
                 <span class="section-line"></span>
-            </div>
-
-            <div class="changelog-card" id="changelog-mobile" onclick="this.classList.toggle('expanded'); createRipple(event)">
-                <div class="changelog-header">
-                    <div class="card-icon-wrap"
-                        style="background: linear-gradient(145deg, rgba(74, 222, 128, 0.22), rgba(74, 222, 128, 0.06)); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.2);">
-                        <i class="material-icons-round">campaign</i>
-                    </div>
-                    <div class="changelog-title-row">
-                        <div class="changelog-version" id="cl-version-mobile">LOADING...</div>
-                        <div class="changelog-title" id="cl-title-mobile">What changed here?</div>
-                    </div>
-                    <i class="material-icons-round card-arrow">expand_more</i>
-                </div>
-                <div class="changelog-content">
-                    <div class="changelog-content-inner" id="cl-msg-mobile">
-                        Fetching the latest brainrot from the lab...
-                    </div>
-                </div>
             </div>
 
             <div class="cards-grid">
@@ -1863,6 +1862,25 @@
                     <div class="dt-badge">Main</div>
                 </div>
 
+                <div class="changelog-card" id="changelog-desktop" onclick="createRipple(event)" style="margin-top:28px;">
+                    <div class="changelog-header">
+                        <div class="card-icon-wrap"
+                            style="background: linear-gradient(145deg, rgba(74, 222, 128, 0.22), rgba(74, 222, 128, 0.06)); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.2);">
+                            <i class="material-icons-round">campaign</i>
+                        </div>
+                        <div class="changelog-title-row">
+                            <div class="changelog-version" id="cl-version-desktop">LOADING...</div>
+                            <div class="changelog-title" id="cl-title-desktop">What changed here?</div>
+                        </div>
+                        <i class="material-icons-round card-arrow">expand_more</i>
+                    </div>
+                    <div class="changelog-content">
+                        <div class="changelog-content-inner" id="cl-msg-desktop">
+                            Fetching the latest brainrot from the lab...
+                        </div>
+                    </div>
+                </div>
+
                 <div class="dt-hero-avatar-wrap">
                     <img src="https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/nocturneassets/logo.png" alt="..." class="dt-hero-avatar">
                 </div>
@@ -1895,25 +1913,6 @@
                 <div class="dt-section-header">
                     <span class="dt-section-label">Projects</span>
                     <span class="dt-section-line"></span>
-                </div>
-
-                <div class="changelog-card" id="changelog-desktop" onclick="createRipple(event)">
-                    <div class="changelog-header">
-                        <div class="card-icon-wrap"
-                            style="background: linear-gradient(145deg, rgba(74, 222, 128, 0.22), rgba(74, 222, 128, 0.06)); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.2);">
-                            <i class="material-icons-round">campaign</i>
-                        </div>
-                        <div class="changelog-title-row">
-                            <div class="changelog-version" id="cl-version-desktop">LOADING...</div>
-                            <div class="changelog-title" id="cl-title-desktop">What changed here?</div>
-                        </div>
-                        <i class="material-icons-round card-arrow">expand_more</i>
-                    </div>
-                    <div class="changelog-content">
-                        <div class="changelog-content-inner" id="cl-msg-desktop">
-                            Fetching the latest brainrot from the lab...
-                        </div>
-                    </div>
                 </div>
 
                 <div class="dt-cards-grid">

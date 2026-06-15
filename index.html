@@ -1784,6 +1784,19 @@
                         </div>
                     </div>
                 </div>
+                <div class="hero-divider"></div>
+                <p class="hero-desc">
+                    Independent experimental lab building <strong>browser-native 3D</strong> experiences, interactive
+                    tools, and sandbox environments. Driven by curiosity, shipped with precision.
+                </p>
+                <a href="https://github.com/nocturnestu" target="_blank" class="cta-btn" onclick="createRipple(event)">
+                    <i class="material-icons-round">code</i>
+                    Our GitHub Repositories
+                </a>
+                <button class="install-btn" id="pwa-install-btn-mobile" onclick="triggerPWAInstall(); createRipple(event)" style="display:none;">
+                    <i class="material-icons-round">download</i>
+                    Install Prism App
+                </button>
                 <div class="changelog-card" id="changelog-mobile" onclick="this.classList.toggle('expanded'); createRipple(event)"
                     style="margin-top:14px;">
                     <div class="changelog-header">
@@ -1803,19 +1816,6 @@
                         </div>
                     </div>
                 </div>
-                <div class="hero-divider"></div>
-                <p class="hero-desc">
-                    Independent experimental lab building <strong>browser-native 3D</strong> experiences, interactive
-                    tools, and sandbox environments. Driven by curiosity, shipped with precision.
-                </p>
-                <a href="https://github.com/nocturnestu" target="_blank" class="cta-btn" onclick="createRipple(event)">
-                    <i class="material-icons-round">code</i>
-                    Our GitHub Repositories
-                </a>
-                <button class="install-btn" id="pwa-install-btn-mobile" onclick="triggerPWAInstall(); createRipple(event)" style="display:none;">
-                    <i class="material-icons-round">download</i>
-                    Install Prism App
-                </button>
                 <div class="settings-trigger" onclick="toggleSettings()" style="top: 10px; right: 10px;">
                     <i class="material-icons-round">settings</i>
                 </div>
@@ -1862,25 +1862,6 @@
                     <div class="dt-badge">Main</div>
                 </div>
 
-                <div class="changelog-card" id="changelog-desktop" onclick="createRipple(event)" style="margin-top:28px;">
-                    <div class="changelog-header">
-                        <div class="card-icon-wrap"
-                            style="background: linear-gradient(145deg, rgba(74, 222, 128, 0.22), rgba(74, 222, 128, 0.06)); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.2);">
-                            <i class="material-icons-round">campaign</i>
-                        </div>
-                        <div class="changelog-title-row">
-                            <div class="changelog-version" id="cl-version-desktop">LOADING...</div>
-                            <div class="changelog-title" id="cl-title-desktop">What changed here?</div>
-                        </div>
-                        <i class="material-icons-round card-arrow">expand_more</i>
-                    </div>
-                    <div class="changelog-content">
-                        <div class="changelog-content-inner" id="cl-msg-desktop">
-                            Fetching the latest brainrot from the lab...
-                        </div>
-                    </div>
-                </div>
-
                 <div class="dt-hero-avatar-wrap">
                     <img src="https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/nocturneassets/logo.png" alt="..." class="dt-hero-avatar">
                 </div>
@@ -1903,6 +1884,24 @@
                     <i class="material-icons-round">download</i>
                     Install Prism App
                 </button>
+                <div class="changelog-card" id="changelog-desktop" onclick="createRipple(event)" style="margin-top:28px;">
+                    <div class="changelog-header">
+                        <div class="card-icon-wrap"
+                            style="background: linear-gradient(145deg, rgba(74, 222, 128, 0.22), rgba(74, 222, 128, 0.06)); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.2);">
+                            <i class="material-icons-round">campaign</i>
+                        </div>
+                        <div class="changelog-title-row">
+                            <div class="changelog-version" id="cl-version-desktop">LOADING...</div>
+                            <div class="changelog-title" id="cl-title-desktop">What changed here?</div>
+                        </div>
+                        <i class="material-icons-round card-arrow">expand_more</i>
+                    </div>
+                    <div class="changelog-content">
+                        <div class="changelog-content-inner" id="cl-msg-desktop">
+                            Fetching the latest brainrot from the lab...
+                        </div>
+                    </div>
+                </div>
                 <div class="settings-trigger" onclick="toggleSettings()" style="top: 40px; right: 40px;">
                     <i class="material-icons-round">settings</i>
                 </div>

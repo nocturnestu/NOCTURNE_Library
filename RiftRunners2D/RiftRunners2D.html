@@ -1029,6 +1029,7 @@
         }
         init() {
           this.isShooting = false;
+          this.sharedEmitter = null;
           const _upg = window._rrShopUpgrades || { moreHp: 0, moreEchoes: 0, betterShield: 0 };
           const _baseMaxHp = 100 + (_upg.moreHp * 50);
           const _baseMaxEcho = 3 + _upg.moreEchoes;
@@ -1796,16 +1797,18 @@
           this.updateDOM();
         }
         spawnParticles(x, y, color, count) {
-          if (!this.sharedEmitter) {
-            this.sharedEmitter = this.add.particles(0, 0, 'particle', {
-              speed: { min: 50, max: 200 },
-              angle: { min: 0, max: 360 },
-              scale: { start: 1.5, end: 0 },
-              lifespan: 400,
-              blendMode: 'ADD'
-            });
-          }
-          this.sharedEmitter.emitParticleAt(x, y, count);
+          const emitter = this.add.particles(x, y, 'particle', {
+            speed: { min: 50, max: 200 },
+            angle: { min: 0, max: 360 },
+            scale: { start: 1.5, end: 0 },
+            lifespan: 400,
+            blendMode: 'ADD',
+            tint: color,
+            quantity: count,
+            emitting: false
+          });
+          emitter.explode(count, x, y);
+          this.time.delayedCall(450, () => { if (emitter.active) emitter.destroy(); });
         }
         shiftPhase() {
           this.gState.phase = (this.gState.phase + 1) % 4;

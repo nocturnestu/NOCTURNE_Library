@@ -1624,6 +1624,104 @@
                 display: none !important;
             }
         }
+
+        .changelog-card {
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+            background: var(--surface-0);
+            border: 1px solid var(--border);
+            border-radius: var(--r-lg);
+            padding: 18px 20px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s var(--spring), box-shadow 0.25s var(--ease-out), background 0.2s ease, border-color 0.2s ease;
+            backdrop-filter: var(--blur-sm);
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+            user-select: none;
+        }
+
+        @media (display-mode: standalone) {
+            .changelog-card.active-pwa {
+                display: flex;
+            }
+        }
+
+        .dt-cards-grid .changelog-card {
+            grid-column: 1 / -1;
+        }
+
+        .changelog-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.09) 50%, transparent);
+        }
+
+        .changelog-card:hover {
+            background: var(--surface-hover);
+            border-color: var(--border-strong);
+        }
+
+        .changelog-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            width: 100%;
+        }
+
+        .changelog-content {
+            display: grid;
+            grid-template-rows: 0fr;
+            transition: grid-template-rows 0.4s var(--spring);
+            width: 100%;
+        }
+
+        .changelog-content-inner {
+            overflow: hidden;
+            font-size: 13.5px;
+            color: var(--text-sub);
+            line-height: 1.6;
+        }
+
+        .changelog-card.expanded .changelog-content,
+        .dt-cards-grid .changelog-card:hover .changelog-content {
+            grid-template-rows: 1fr;
+        }
+
+        .changelog-title-row {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .changelog-version {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 10px;
+            font-weight: 700;
+            color: #4ade80;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+
+        .changelog-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .changelog-card .card-arrow {
+            transition: transform 0.4s var(--spring), color 0.2s ease;
+        }
+
+        .changelog-card.expanded .card-arrow,
+        .dt-cards-grid .changelog-card:hover .card-arrow {
+            transform: rotate(180deg);
+            color: #4ade80;
+        }
     </style>
 </head>
 
@@ -1710,6 +1808,25 @@
                 <span class="section-line"></span>
             </div>
 
+            <div class="changelog-card" id="changelog-mobile" onclick="this.classList.toggle('expanded'); createRipple(event)">
+                <div class="changelog-header">
+                    <div class="card-icon-wrap"
+                        style="background: linear-gradient(145deg, rgba(74, 222, 128, 0.22), rgba(74, 222, 128, 0.06)); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.2);">
+                        <i class="material-icons-round">campaign</i>
+                    </div>
+                    <div class="changelog-title-row">
+                        <div class="changelog-version" id="cl-version-mobile">LOADING...</div>
+                        <div class="changelog-title" id="cl-title-mobile">What changed here?</div>
+                    </div>
+                    <i class="material-icons-round card-arrow">expand_more</i>
+                </div>
+                <div class="changelog-content">
+                    <div class="changelog-content-inner" id="cl-msg-mobile">
+                        Fetching the latest brainrot from the lab...
+                    </div>
+                </div>
+            </div>
+
             <div class="cards-grid">
                 <div class="glass-card" onclick="openModal('modal-3d'); createRipple(event)">
                     <div class="card-icon-wrap blue">
@@ -1779,6 +1896,26 @@
                     <span class="dt-section-label">Projects</span>
                     <span class="dt-section-line"></span>
                 </div>
+
+                <div class="changelog-card" id="changelog-desktop" onclick="createRipple(event)">
+                    <div class="changelog-header">
+                        <div class="card-icon-wrap"
+                            style="background: linear-gradient(145deg, rgba(74, 222, 128, 0.22), rgba(74, 222, 128, 0.06)); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.2);">
+                            <i class="material-icons-round">campaign</i>
+                        </div>
+                        <div class="changelog-title-row">
+                            <div class="changelog-version" id="cl-version-desktop">LOADING...</div>
+                            <div class="changelog-title" id="cl-title-desktop">What changed here?</div>
+                        </div>
+                        <i class="material-icons-round card-arrow">expand_more</i>
+                    </div>
+                    <div class="changelog-content">
+                        <div class="changelog-content-inner" id="cl-msg-desktop">
+                            Fetching the latest brainrot from the lab...
+                        </div>
+                    </div>
+                </div>
+
                 <div class="dt-cards-grid">
                     <div class="dt-glass-card" onclick="openModal('modal-3d'); createRipple(event)">
                         <div class="card-icon-wrap blue">
@@ -1823,7 +1960,7 @@
             <div class="library-header-wrap">
                 <h2 class="library-title">Games</h2>
             </div>
-            <p style="font-size: 13px; color: var(--text-sub); margin-bottom: 8px;">Our NOCTURNE flagships, built for interaction.</p>
+            <p style="font-size: 13px; color: var(--text-sub); margin-bottom: 8px;">Our NOCTURNE flagships, built for immersive interactivity.</p>
     
             <div class="library-grid">
                 <a href="./SandBox3D/sb3d_page" class="list-item" onclick="createRipple(event)">
@@ -1855,16 +1992,15 @@
             <div class="library-header-wrap">
                 <h2 class="library-title">Apps & Utilities</h2>
             </div>
-            <p style="font-size: 13px; color: var(--text-sub); margin-bottom: 8px;">Experimental automation and niche
-                browser utilities.</p>
+            <p style="font-size: 13px; color: var(--text-sub); margin-bottom: 8px;">Experimental webpages, shown as 'tools' or just for show.</p>
     
             <div class="library-grid">
                 <a href="./Other/ismycompteureron" class="list-item"
                     onclick="createRipple(event)">
                     <i class="material-icons-round item-icon">web_asset</i>
                     <div class="item-content">
-                        <div class="item-title">Is My Computer On?</div>
-                        <div class="item-subtitle">Useless Pages</div>
+                        <div class="item-title">Is My Compooper On?</div>
+                        <div class="item-subtitle">Checks whether your 'Compooper' is ON or nah.</div>
                     </div>
                     <i class="material-icons-round item-arrow">chevron_right</i>
                 </a>
@@ -1872,7 +2008,7 @@
                     <i class="material-icons-round item-icon">web_asset</i>
                     <div class="item-content">
                         <div class="item-title">Device Checker</div>
-                        <div class="item-subtitle">Statistics Page</div>
+                        <div class="item-subtitle">See your user-agent in stats</div>
                     </div>
                     <i class="material-icons-round item-arrow">chevron_right</i>
                 </a>
@@ -1880,7 +2016,7 @@
                     <i class="material-icons-round item-icon">web_asset</i>
                     <div class="item-content">
                         <div class="item-title">Objects Move or Nah</div>
-                        <div class="item-subtitle">ThreeJS Simulation</div>
+                        <div class="item-subtitle">ThreeJS Simulation (just cubes)</div>
                     </div>
                     <i class="material-icons-round item-arrow">chevron_right</i>
                 </a>
@@ -1897,6 +2033,14 @@
                     <div class="item-content">
                         <div class="item-title">Math or DIE</div>
                         <div class="item-subtitle">Random Math Generator</div>
+                    </div>
+                    <i class="material-icons-round item-arrow">chevron_right</i>
+                </a>
+                <a href="./Other/lapscan" class="list-item" onclick="createRipple(event)">
+                    <i class="material-icons-round item-icon">web_asset</i>
+                    <div class="item-content">
+                        <div class="item-title">LAPSCAN</div>
+                        <div class="item-subtitle">Variance of Laplacian Scanner</div>
                     </div>
                     <i class="material-icons-round item-arrow">chevron_right</i>
                 </a>
@@ -2335,10 +2479,12 @@
                     './Other/notmoving',
                     './Other/gifview',
                     './Other/mathlol',
+                    './Other/lapscan',
                     'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/nocturneassets/logo.png',
                     'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/nocturneassets/logo2.png',
                     'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/nocturneassets/logo192.png',
                     'https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Space+Grotesk:wght@300;400;500;600;700&display=swap',
+                    'https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500;700&display=swap',
                     'https://fonts.googleapis.com/icon?family=Material+Icons+Round',
                 ];
                 const GAME_URLS = [
@@ -2790,6 +2936,33 @@
             const observer = new MutationObserver(() => reposition());
             observer.observe(document.body, { childList: true, subtree: true });
         })();
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+
+            if (isStandalone) {
+                document.getElementById('changelog-mobile').classList.add('active-pwa');
+                document.getElementById('changelog-desktop').classList.add('active-pwa');
+
+                fetch('changelog.json')
+                    .then(res => res.json())
+                    .then(data => {
+                        document.getElementById('cl-version-mobile').textContent = data.prism_version;
+                        document.getElementById('cl-title-mobile').textContent = data.title;
+                        document.getElementById('cl-msg-mobile').textContent = data.message;
+
+                        document.getElementById('cl-version-desktop').textContent = data.prism_version;
+                        document.getElementById('cl-title-desktop').textContent = data.title;
+                        document.getElementById('cl-msg-desktop').textContent = data.message;
+                    })
+                    .catch(err => {
+                        console.error('Changelog fetch failed bro', err);
+                        const fallbackMsg = 'Failed to fetch the changelog.';
+                        document.getElementById('cl-msg-mobile').textContent = fallbackMsg;
+                        document.getElementById('cl-msg-desktop').textContent = fallbackMsg;
+                    });
+            }
+        });
     </script>
     <script>
         if ('serviceWorker' in navigator) {

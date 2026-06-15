@@ -1,4 +1,4 @@
-const CACHE_NAME = 'PRISM-v26.13.1';
+const CACHE_NAME = 'PRISM-v26.14';
 
 const CORE_URLS = [
     '/',
@@ -13,10 +13,12 @@ const CORE_URLS = [
     './Other/notmoving',
     './Other/gifview',
     './Other/mathlol',
+    './Other/lapscan',
     'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/nocturneassets/logo.png',
     'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/nocturneassets/logo2.png',
     'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/nocturneassets/logo192.png',
     'https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Space+Grotesk:wght@300;400;500;600;700&display=swap',
+    'https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500;700&display=swap',
     'https://fonts.googleapis.com/icon?family=Material+Icons+Round',
 ];
 

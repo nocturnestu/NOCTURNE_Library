@@ -1,8 +1,29 @@
-const CACHE_NAME = 'PRISM-v26.14';
+const CACHE_NAME = 'PRISM-V2.0.0';
+
+const WATERMARK_HTML = `
+<div id="prism-sw-watermark" style="all:initial;position:fixed;bottom:8px;right:10px;z-index:2147483647;font-family:'Courier New',monospace;font-size:11px;line-height:1.3;color:rgba(255,255,255,0.55);background:rgba(0,0,0,0.35);padding:4px 8px;border-radius:4px;pointer-events:none;user-select:none;white-space:nowrap;letter-spacing:0.3px;">NOCTURNE Studios // Project Prism <span style="opacity:0.7;">${CACHE_NAME}</span></div>`;
+
+function injectWatermark(response) {
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.includes('text/html')) return response;
+
+    return response.text().then(html => {
+        const injected = html.includes('</body>')
+            ? html.replace('</body>', WATERMARK_HTML + '</body>')
+            : html + WATERMARK_HTML;
+
+        return new Response(injected, {
+            status: response.status,
+            statusText: response.statusText,
+            headers: response.headers
+        });
+    }).catch(() => response);
+}
 
 const CORE_URLS = [
     '/',
     '/index.html',
+    '/changelog.json',
     './SandBox3D/sb3d_page',
     './RiftRunners2D/rr2d_page',
     './RiftRunners2D/RiftRunners2D',
@@ -13,7 +34,7 @@ const CORE_URLS = [
     './Other/notmoving',
     './Other/gifview',
     './Other/mathlol',
-    './Other/lapscan',
+    './Tools/lapscan',
     'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/nocturneassets/logo.png',
     'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/nocturneassets/logo2.png',
     'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/nocturneassets/logo192.png',
@@ -28,8 +49,8 @@ const GAME_URLS = [
     'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/sb3dmatyou.js',
     'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/sb3duianim_pc.js',
     'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/sb3duianim_mobile.js',
-    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/gahdayum.mp4',
-    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/bomboclat.mp3',
+    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/blind.mp4',
+    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/explode.mp3',
     'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/neutral/neu1.mp3',
     'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/neutral/neu2.mp3',
     'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/neutral/neu3.mp3',
@@ -40,6 +61,11 @@ const GAME_URLS = [
     'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/midnight/mid2.mp3',
     'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/midnight/mid3.mp3',
     'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/midnight/mid4.mp3',
+    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/ground.png',
+    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/ramp.png',
+    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/stairs.png',
+    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/pool.png',
+    'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/pillars.png',
     'https://cdnjs.cloudflare.com/ajax/libs/phaser/3.60.0/phaser.min.js',
     'https://cdn.jsdelivr.net/npm/babylonjs@9.11.0/babylon.js',
     'https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js',
@@ -230,24 +256,28 @@ self.addEventListener('fetch', e => {
 
     e.respondWith((async () => {
         const cacheMatch = await caches.match(e.request);
-        if (cacheMatch) return cacheMatch;
+        if (cacheMatch) return isStandalone ? injectWatermark(cacheMatch) : cacheMatch;
 
         try {
             const idbData = await getIDBData(url);
             if (idbData) {
+                let idbResponse;
                 if (idbData.blob) {
-                    return new Response(idbData.blob, {
+                    idbResponse = new Response(idbData.blob, {
                         headers: { 'Content-Type': idbData.type || 'application/octet-stream' }
                     });
+                } else {
+                    idbResponse = new Response(JSON.stringify(idbData), {
+                        headers: { 'Content-Type': 'application/json' }
+                    });
                 }
-                return new Response(JSON.stringify(idbData), {
-                    headers: { 'Content-Type': 'application/json' }
-                });
+                return isStandalone ? injectWatermark(idbResponse) : idbResponse;
             }
         } catch (_) { }
 
         try {
-            return await fetch(e.request);
+            const liveResponse = await fetch(e.request);
+            return isStandalone ? injectWatermark(liveResponse) : liveResponse;
         } catch (err) {
             if (url.includes('/api/settings') || url.includes('/userdata/')) {
                 return new Response(JSON.stringify({ error: 'Offline' }), {

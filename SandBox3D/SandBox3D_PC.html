@@ -742,7 +742,7 @@
         <div class="loader-content">
             <div class="loader-spinner"></div>
             <div class="loader-text">Sand Box 3D for PC</div>
-            <div class="loader-subtext-version">Version: v26.06.06</div>
+            <div class="loader-subtext-version">Version: v26.07.01</div>
             <div class="loader-subtext">Setting up your sandbox...</div>
             <button id="skip-loading-btn" onclick="skipLoading()">Skip Setup</button>
         </div>
@@ -753,12 +753,12 @@
     <div id="flash-layer">
         <video id="flash-meme-vid" playsinline preload="auto"
             style="width:100%; height:100%; object-fit:fill; display:none;">
-            <source src="https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/gahdayum.mp4" type="video/mp4">
+            <source src="https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/blind.mp4" type="video/mp4">
         </video>
     </div>
 
     <audio id="explosion-snd" preload="auto">
-        <source src="https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/bomboclat.mp3" type="audio/mpeg">
+        <source src="https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/explode.mp3" type="audio/mpeg">
     </audio>
 
     <div id="audio-preload-layer" style="display: none;">
@@ -1240,6 +1240,13 @@
                                     </button>
                                 </div>
                             </div>
+
+                            <div class="control-group" style="margin-top: 15px;">
+                                <button id="btn-map-textures" onclick="toggleMapTextures()" style="border-left: 4px solid #e91e63; padding: 12px;">
+                                    <span class="shape-icon" style="background: #e91e63; border-radius: 2px;"></span>
+                                    Map Textures are OFF
+                                </button>
+                            </div>                        
                         </div>
 
                         <div id="settings-cat-rendering" class="settings-category">                        
@@ -1584,6 +1591,7 @@
         let isSpawnParticlesEnabled = localStorage.getItem('sb3d_spawn_particles') !== 'false';
         let isBgPillarsEnabled = localStorage.getItem('sb3d_bgPillars') !== '0';
         let isBgDecorsEnabled = localStorage.getItem('sb3d_bgDecors') !== '0';
+        let isMapTexturesEnabled = localStorage.getItem('sb3d_map_textures') === 'true';
         let filmFXParams = {
             sharpen: 0.6,
             grainIntensity: 28,
@@ -1768,6 +1776,14 @@
                 btnRubberMat: "Rubber",
                 labelSpecialShapes: "Special Shapes",
                 labelSpecialMaterials: "Special Materials",
+                dynMapTextureOn: "Map Textures are ON",
+                dynMapTextureOff: "Map Textures are OFF",
+                btnRandomizeTextures: "Randomize All Textures",
+                labelTextureGround: "Ground",
+                labelTextureRamp: "Ramp",
+                labelTextureStairs: "Stairs",
+                labelTexturePool: "Pool",
+                labelTexturePillars: "Pillars",
             },
             genz: {
                 pageTitle: "sandbox 3d pc 💀",
@@ -1934,6 +1950,14 @@
                 btnRubberMat: "Rubber 🫧 (certified yoinker)",
                 labelSpecialShapes: "Weird Shapes 💀",
                 labelSpecialMaterials: "Fancy Materials ✨",
+                dynMapTextureOn: "Map textures are eating rn 🎨",
+                dynMapTextureOff: "Map textures said nah (boring era)",
+                btnRandomizeTextures: "🎲 randomize everything bestie",
+                labelTextureGround: "Ground (the floor fr)",
+                labelTextureRamp: "Ramp (the slanty boi)",
+                labelTextureStairs: "Stairs (climb diff)",
+                labelTexturePool: "Pool (wet ahh)",
+                labelTexturePillars: "Pillars (stand tall fr)",
             },
             shakespeare: {
                 pageTitle: "Thee Noble Sandbox of Three Dimensions, PC Edition",
@@ -2100,7 +2124,23 @@
                 btnRubberMat: "Rubber – Most Resilient",
                 labelSpecialShapes: "Extraordinary Shapes",
                 labelSpecialMaterials: "Rare Materials of Distinction",
+                dynMapTextureOn: "Map Textures doth grace the realm",
+                dynMapTextureOff: "Map Textures are rendered dormant",
+                btnRandomizeTextures: "🎲 Randomize All — Let Chaos Reign",
+                labelTextureGround: "The Noble Ground",
+                labelTextureRamp: "The Inclined Ramp",
+                labelTextureStairs: "The Ascending Stairs",
+                labelTexturePool: "The Pool",
+                labelTexturePillars: "The Mighty Pillars",
             },
+        };
+
+        const MAP_TEXTURE_CATEGORIES = {
+            ground: 'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/ground.png',
+            ramp: 'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/ramp.png',
+            stairs: 'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/stairs.png',
+            pool: 'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/pool.png',
+            pillars: 'https://raw.githubusercontent.com/nocturnestu/NOCTURNE_Library/main/SandBox3D/asset/pillars.png',
         };
 
         const customModelTemplates = [null, null, null];
@@ -2640,6 +2680,28 @@
 
             const explVolLbl = document.getElementById('lbl-explosion-vol');
             if (explVolLbl) explVolLbl.innerText = t.dynExplosionVol;
+
+            const mapTexBtn = document.getElementById('btn-map-textures');
+            if (mapTexBtn) {
+                mapTexBtn.innerHTML = isMapTexturesEnabled
+                    ? `<span class="shape-icon" style="background:#e91e63;border-radius:2px;box-shadow:0 0 6px #e91e63;"></span> ${t.dynMapTextureOn}`
+                    : `<span class="shape-icon" style="background:#555;border-radius:2px;"></span> ${t.dynMapTextureOff}`;
+            }
+
+            const randBtn = document.getElementById('lbl-randomize-textures');
+            if (randBtn) randBtn.innerText = t.btnRandomizeTextures;
+
+            const texLabels = {
+                'lbl-tex-ground': t.labelTextureGround,
+                'lbl-tex-ramp': t.labelTextureRamp,
+                'lbl-tex-stairs': t.labelTextureStairs,
+                'lbl-tex-pool': t.labelTexturePool,
+                'lbl-tex-pillars': t.labelTexturePillars,
+            };
+            for (const [id, text] of Object.entries(texLabels)) {
+                const el = document.getElementById(id);
+                if (el) el.innerText = text;
+            }
         }
 
         function onLangChange(lang) {
@@ -3787,6 +3849,8 @@
             if (sb3d.scene) { sb3d.scene.dispose(); sb3d.scene = null; }
             if (sb3d.engine) { sb3d.engine.dispose(); sb3d.engine = null; }
 
+            const preservedEnabled = isMapTexturesEnabled;
+
             sceneRef = null;
             cleanupNightPulse();
             nightPulseLight = null;
@@ -3805,6 +3869,14 @@
             isFrustumCullingEnabled = false;
 
             sb3d.init();
+
+            setTimeout(() => {
+                isMapTexturesEnabled = preservedEnabled;
+                updateMapTextureButton();
+                if (isMapTexturesEnabled) {
+                    applyMapTextures();
+                }
+            }, 1000);
         }
 
         function showBabylonInspector() {
@@ -4298,6 +4370,160 @@
             spawnedMeshes = [];
         }
 
+        function toggleMapTextures() {
+            isMapTexturesEnabled = !isMapTexturesEnabled;
+            localStorage.setItem('sb3d_map_textures', isMapTexturesEnabled ? 'true' : 'false');
+            updateMapTextureButton();
+
+            if (isMapTexturesEnabled) {
+                applyMapTextures();
+            } else {
+                resetMapTextures();
+            }
+        }
+
+        function updateMapTextureButton() {
+            const btn = document.getElementById('btn-map-textures');
+            if (!btn) return;
+            const t = SB3D_LANGS[activeLang];
+
+            if (isMapTexturesEnabled) {
+                btn.innerHTML = `<span class="shape-icon" style="background:#e91e63;border-radius:2px;box-shadow:0 0 6px #e91e63;"></span> ${t.dynMapTextureOn}`;
+                btn.classList.add('active');
+                btn.style.borderLeftColor = '#e91e63';
+            } else {
+                btn.innerHTML = `<span class="shape-icon" style="background:#555;border-radius:2px;"></span> ${t.dynMapTextureOff}`;
+                btn.classList.remove('active');
+                btn.style.borderLeftColor = '#e91e63';
+            }
+        }
+
+        function getTextureForCategory(cat) {
+            return MAP_TEXTURE_CATEGORIES[cat] || null;
+        }
+
+        function applyTextureToMesh(mesh, textureUrl, scene) {
+            if (!mesh || !mesh.material || !textureUrl || !scene) return;
+
+            const tex = new BABYLON.Texture(textureUrl, scene);
+            tex.uScale = 4;
+            tex.vScale = 4;
+            tex.wrapU = BABYLON.Texture.WRAP_ADDRESSMODE;
+            tex.wrapV = BABYLON.Texture.WRAP_ADDRESSMODE;
+
+            if (mesh.material instanceof BABYLON.PBRMaterial) {
+                mesh.material.albedoTexture = tex;
+                mesh.material.useRoughnessFromMetallicTextureAlpha = false;
+                mesh.material.useRoughnessFromMetallicTextureGreen = false;
+            } else {
+                mesh.material.diffuseTexture = tex;
+            }
+
+            mesh.material.specularColor = new BABYLON.Color3(0.1, 0.1, 0.1);
+        }
+
+        function applyMapTextures() {
+            if (!isMapTexturesEnabled || !sceneRef) return;
+
+            const ground = sceneRef.getMeshByName('ground');
+            if (ground) {
+                const url = getTextureForCategory('ground');
+                if (url) applyTextureToMesh(ground, url, sceneRef);
+            }
+
+            const ramp = sceneRef.getMeshByName('ramp');
+            if (ramp) {
+                const url = getTextureForCategory('ramp');
+                if (url) applyTextureToMesh(ramp, url, sceneRef);
+            }
+
+            sceneRef.meshes.filter(m => m.name.startsWith('stair_step_')).forEach(mesh => {
+                const url = getTextureForCategory('stairs');
+                if (url) applyTextureToMesh(mesh, url, sceneRef);
+            });
+
+            const poolFloor = sceneRef.getMeshByName('poolFloor');
+            if (poolFloor) {
+                const url = getTextureForCategory('pool');
+                if (url) applyTextureToMesh(poolFloor, url, sceneRef);
+            }
+
+            sceneRef.meshes.filter(m => m.name === 'pillar').forEach(mesh => {
+                const url = getTextureForCategory('pillars');
+                if (url) applyTextureToMesh(mesh, url, sceneRef);
+            });
+
+        }
+
+        function resetMapTextures() {
+            if (!sceneRef) return;
+
+            const ground = sceneRef.getMeshByName('ground');
+            if (ground && ground.material) {
+                if (ground.material instanceof BABYLON.PBRMaterial) {
+                    ground.material.albedoTexture = null;
+                } else {
+                    ground.material.diffuseTexture = null;
+                }
+                ground.material.diffuseColor = new BABYLON.Color3(0.15, 0.15, 0.2);
+            }
+
+            const ramp = sceneRef.getMeshByName('ramp');
+            if (ramp && ramp.material) {
+                if (ramp.material instanceof BABYLON.PBRMaterial) {
+                    ramp.material.albedoTexture = null;
+                } else {
+                    ramp.material.diffuseTexture = null;
+                }
+                ramp.material.diffuseColor = new BABYLON.Color3(0.25, 0.25, 0.3);
+            }
+
+            sceneRef.meshes.filter(m => m.name.startsWith('stair_step_')).forEach(mesh => {
+                if (mesh.material) {
+                    if (mesh.material instanceof BABYLON.PBRMaterial) {
+                        mesh.material.albedoTexture = null;
+                    } else {
+                        mesh.material.diffuseTexture = null;
+                    }
+                    mesh.material.diffuseColor = new BABYLON.Color3(0.22, 0.22, 0.28);
+                }
+            });
+
+            ['poolFloor'].forEach(name => {
+                const mesh = sceneRef.getMeshByName(name);
+                if (mesh && mesh.material) {
+                    if (mesh.material instanceof BABYLON.PBRMaterial) {
+                        mesh.material.albedoTexture = null;
+                    } else {
+                        mesh.material.diffuseTexture = null;
+                    }
+                    mesh.material.diffuseColor = new BABYLON.Color3(0.5, 0.5, 0.55);
+                }
+            });
+
+            sceneRef.meshes.filter(m => m.name === 'pillar').forEach(mesh => {
+                if (mesh.material) {
+                    if (mesh.material instanceof BABYLON.PBRMaterial) {
+                        mesh.material.albedoTexture = null;
+                    } else {
+                        mesh.material.diffuseTexture = null;
+                    }
+                    mesh.material.diffuseColor = new BABYLON.Color3(0.4, 0.4, 0.4);
+                }
+            });
+
+            sceneRef.meshes.filter(m => m.name.startsWith('bgPillar_')).forEach(mesh => {
+                if (mesh.material) {
+                    if (mesh.material instanceof BABYLON.PBRMaterial) {
+                        mesh.material.albedoTexture = null;
+                    } else {
+                        mesh.material.diffuseTexture = null;
+                    }
+                    mesh.material.diffuseColor = new BABYLON.Color3(0.12, 0.12, 0.15);
+                }
+            });
+        }
+
         // ==========================================
         // SECTION 2: BABYLON 3D ENGINE
         // ==========================================
@@ -4386,6 +4612,12 @@
                             this.scene = this.createScene();
                             sceneRef = this.scene;
                             workshop.shaman.sandbox3d.TemporalAudio.init(this.scene);
+
+                            if (isMapTexturesEnabled) {
+                                setTimeout(() => {
+                                    applyMapTextures();
+                                }, 500);
+                            }
 
                             if (this.engine.isWebGPU || this.engine instanceof BABYLON.WebGPUEngine) {
                                 const uploadBtn = document.getElementById('btn-upload');
@@ -4610,6 +4842,10 @@
 
                         this.WaterSimulation.init(scene);
                         setTimeout(() => { toggleSun(true); }, 100);
+
+                        if (isMapTexturesEnabled) {
+                            setTimeout(() => applyMapTextures(), 100);
+                        }
 
                         return scene;
                     },
@@ -6228,6 +6464,7 @@
         updateSpawnParticlesButton();
         updateWebGPUButtonState();
         syncPanelPositions();
+        updateMapTextureButton();
         workshop.shaman.sandbox3d.init();
 
     </script>

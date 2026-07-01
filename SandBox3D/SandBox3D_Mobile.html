@@ -4396,10 +4396,10 @@
             if (!mesh || !mesh.material || !textureUrl || !scene) return;
 
             const tex = new BABYLON.Texture(textureUrl, scene);
-            tex.uScale = 4;
-            tex.vScale = 4;
-            tex.wrapU = BABYLON.Texture.WRAP_ADDRESSMODE;
-            tex.wrapV = BABYLON.Texture.WRAP_ADDRESSMODE;
+            tex.uScale = 1;
+            tex.vScale = 1;
+            tex.wrapU = BABYLON.Texture.CLAMP_ADDRESSMODE;
+            tex.wrapV = BABYLON.Texture.CLAMP_ADDRESSMODE;
 
             if (mesh.material instanceof BABYLON.PBRMaterial) {
                 mesh.material.albedoTexture = tex;

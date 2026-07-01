@@ -1,24 +1,4 @@
-const CACHE_NAME = 'PRISM-V2.0.0';
-
-const WATERMARK_HTML = `
-<div id="prism-sw-watermark" style="all:initial;position:fixed;bottom:8px;right:10px;z-index:2147483647;font-family:'Courier New',monospace;font-size:11px;line-height:1.3;color:rgba(255,255,255,0.55);background:rgba(0,0,0,0.35);padding:4px 8px;border-radius:4px;pointer-events:none;user-select:none;white-space:nowrap;letter-spacing:0.3px;">NOCTURNE Studios // Project Prism <span style="opacity:0.7;">${CACHE_NAME}</span></div>`;
-
-function injectWatermark(response) {
-    const contentType = response.headers.get('content-type') || '';
-    if (!contentType.includes('text/html')) return response;
-
-    return response.text().then(html => {
-        const injected = html.includes('</body>')
-            ? html.replace('</body>', WATERMARK_HTML + '</body>')
-            : html + WATERMARK_HTML;
-
-        return new Response(injected, {
-            status: response.status,
-            statusText: response.statusText,
-            headers: response.headers
-        });
-    }).catch(() => response);
-}
+const CACHE_NAME = 'PRISM-V2.0.1';
 
 const CORE_URLS = [
     '/',

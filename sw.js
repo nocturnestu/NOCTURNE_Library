@@ -1,4 +1,4 @@
-const CACHE_NAME = 'PRISM-V2.0.1';
+const CACHE_NAME = 'PRISM-v2.1.0';
 
 const CORE_URLS = [
     '/',
@@ -236,28 +236,24 @@ self.addEventListener('fetch', e => {
 
     e.respondWith((async () => {
         const cacheMatch = await caches.match(e.request);
-        if (cacheMatch) return isStandalone ? injectWatermark(cacheMatch) : cacheMatch;
+        if (cacheMatch) return cacheMatch;
 
         try {
             const idbData = await getIDBData(url);
             if (idbData) {
-                let idbResponse;
                 if (idbData.blob) {
-                    idbResponse = new Response(idbData.blob, {
+                    return new Response(idbData.blob, {
                         headers: { 'Content-Type': idbData.type || 'application/octet-stream' }
                     });
-                } else {
-                    idbResponse = new Response(JSON.stringify(idbData), {
-                        headers: { 'Content-Type': 'application/json' }
-                    });
                 }
-                return isStandalone ? injectWatermark(idbResponse) : idbResponse;
+                return new Response(JSON.stringify(idbData), {
+                    headers: { 'Content-Type': 'application/json' }
+                });
             }
         } catch (_) { }
 
         try {
-            const liveResponse = await fetch(e.request);
-            return isStandalone ? injectWatermark(liveResponse) : liveResponse;
+            return await fetch(e.request);
         } catch (err) {
             if (url.includes('/api/settings') || url.includes('/userdata/')) {
                 return new Response(JSON.stringify({ error: 'Offline' }), {

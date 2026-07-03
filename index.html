@@ -1793,8 +1793,7 @@
                     <i class="material-icons-round card-arrow">chevron_right</i>
                 </div>
                 <div class="glass-card" onclick="openModal('modal-tools'); createRipple(event)">
-                    <div class="card-icon-wrap"
-                        style="background: linear-gradient(145deg, rgba(103, 232, 249, 0.22), rgba(103, 232, 249, 0.06)); color: var(--tertiary); border: 1px solid rgba(103, 232, 249, 0.2);">
+                    <div class="card-icon-wrap purple">
                         <i class="material-icons-round">build</i>
                     </div>
                     <div class="card-body">
@@ -1879,8 +1878,7 @@
                         <i class="material-icons-round card-arrow">chevron_right</i>
                     </div>
                     <div class="dt-glass-card" onclick="openModal('modal-tools'); createRipple(event)">
-                        <div class="card-icon-wrap"
-                            style="background: linear-gradient(145deg, rgba(103, 232, 249, 0.22), rgba(103, 232, 249, 0.06)); color: var(--tertiary); border: 1px solid rgba(103, 232, 249, 0.2);">
+                        <div class="card-icon-wrap purple">
                             <i class="material-icons-round">build</i>
                         </div>
                         <div class="card-body">
@@ -2189,6 +2187,16 @@
             applyBgState(false);
         });
 
+        window.__PRISM_ENV__ = (function () {
+            const liveStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+            if (liveStandalone) localStorage.setItem('PRISM_INSTALLED', 'true');
+            return { get isStandalone() { return localStorage.getItem('PRISM_INSTALLED') === 'true'; } };
+        })();
+
+        window.addEventListener('appinstalled', () => {
+            localStorage.setItem('PRISM_INSTALLED', 'true');
+        });
+
         function triggerPWAInstall() {
             if (!_pwaInstallPrompt) return;
             _pwaInstallPrompt.prompt();
@@ -2198,7 +2206,7 @@
         }
 
         (function () {
-            const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+            const isStandalone = window.__PRISM_ENV__.isStandalone;
             if (!isStandalone) return;
             const v = localStorage.getItem('PRISM_SW_VERSION');
             const el = document.getElementById('sw-version-display');
@@ -2288,7 +2296,7 @@
 
         async function clearAndRecache(mode = 'full') {
             if (!navigator.onLine) return;
-            const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+            const isStandalone = window.__PRISM_ENV__.isStandalone;
 
             const dlPage = document.getElementById('download-page');
             const dlBar = document.getElementById('download-bar');
@@ -2815,8 +2823,7 @@
             var statusEl = document.getElementById('loader-status');
             var page = document.getElementById('page');
 
-            const isStandalone = window.matchMedia('(display-mode: standalone)').matches
-                || navigator.standalone === true;
+            const isStandalone = window.__PRISM_ENV__.isStandalone;
 
             const taglines = [
                 'Initializing Prism',
@@ -2930,8 +2937,7 @@
         })();
 
         window.addEventListener('DOMContentLoaded', () => {
-            const isStandalone = window.matchMedia('(display-mode: standalone)').matches
-                || navigator.standalone === true;
+            const isStandalone = window.__PRISM_ENV__.isStandalone;
 
             if (isStandalone) {
                 const mobileTrigger = document.getElementById('changelog-trigger-mobile');
@@ -2957,7 +2963,7 @@
     <script>
         if ('serviceWorker' in navigator) {
             const SW_VERSION_KEY = 'PRISM_SW_VERSION';
-            const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+            const isStandalone = window.__PRISM_ENV__.isStandalone;
 
             fetch('/sw.js', { cache: 'no-store' })
                 .then(res => res.text())

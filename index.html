@@ -1121,47 +1121,42 @@
             }
         }
 
-        @media (display-mode: standalone) {
-            #pwa-status {
-                position: fixed;
-                bottom: 90px;
-                right: 24px;
-                z-index: 1100;
-                display: flex;
-                align-items: center;
-                gap: 7px;
-                padding: 7px 13px;
-                border-radius: var(--r-pill);
-                background: var(--surface-1);
-                border: 1px solid var(--border);
-                backdrop-filter: var(--blur-sm);
-                -webkit-backdrop-filter: var(--blur-sm);
-                font-family: 'DM Sans', sans-serif;
-                font-size: 12px;
-                font-weight: 500;
-                color: var(--text-sub);
-                pointer-events: none;
-                opacity: 0;
-                transform: translateY(6px) scale(0.95);
-                transition: opacity 0.3s var(--ease-out), transform 0.3s var(--spring);
-            }
-
-            #pwa-status.visible {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
-
-            #pwa-status-dot {
-                width: 7px;
-                height: 7px;
-                border-radius: 50%;
-                flex-shrink: 0;
-                transition: background 0.4s ease;
-            }
-
-            #pwa-status.online #pwa-status-dot  { background: #4ade80; box-shadow: 0 0 6px rgba(74,222,128,0.55); }
-            #pwa-status.offline #pwa-status-dot { background: #f87171; box-shadow: 0 0 6px rgba(248,113,113,0.55); }
+        html.prism-installed #pwa-status {
+            position: fixed;
+            bottom: 90px;
+            right: 24px;
+            z-index: 1100;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 7px 13px;
+            border-radius: var(--r-pill);
+            background: var(--surface-1);
+            border: 1px solid var(--border);
+            backdrop-filter: var(--blur-sm);
+            -webkit-backdrop-filter: var(--blur-sm);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-sub);
+            pointer-events: none;
+            opacity: 0;
+            transform: translateY(6px) scale(0.95);
+            transition: opacity 0.3s var(--ease-out), transform 0.3s var(--spring);
         }
+        html.prism-installed #pwa-status.visible {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+        html.prism-installed #pwa-status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            transition: background 0.4s ease;
+        }
+        html.prism-installed #pwa-status.online #pwa-status-dot  { background: #4ade80; box-shadow: 0 0 6px rgba(74,222,128,0.55); }
+        html.prism-installed #pwa-status.offline #pwa-status-dot { background: #f87171; box-shadow: 0 0 6px rgba(248,113,113,0.55); }
 
         @media (max-width: 1023px) {
             .list-item-disabled {
@@ -1538,11 +1533,9 @@
             }
         }
 
-        @media not all and (display-mode: standalone) {
-            #recache-btn,
-            .storage-heading {
-                display: none !important;
-            }
+        html:not(.prism-installed) #recache-btn,
+        html:not(.prism-installed) .storage-heading {
+            display: none !important;
         }
 
         @keyframes enter-down {
@@ -1619,10 +1612,8 @@
             text-shadow: 0 0 6px var(--primary-glow);
         }
 
-        @media not all and (display-mode: standalone) {
-            #recache-game-toggle {
-                display: none !important;
-            }
+        html:not(.prism-installed) #recache-game-toggle {
+            display: none !important;
         }
 
         .changelog-trigger {
@@ -2188,13 +2179,36 @@
         });
 
         window.__PRISM_ENV__ = (function () {
+            function syncInstalledClass(installed) {
+                document.documentElement.classList.toggle('prism-installed', installed);
+            }
+
             const liveStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
             if (liveStandalone) localStorage.setItem('PRISM_INSTALLED', 'true');
-            return { get isStandalone() { return localStorage.getItem('PRISM_INSTALLED') === 'true'; } };
+
+            const flagged = localStorage.getItem('PRISM_INSTALLED') === 'true';
+            syncInstalledClass(flagged);
+
+            if (!flagged && navigator.getInstalledRelatedApps) {
+                navigator.getInstalledRelatedApps().then(apps => {
+                    if (apps.length > 0) {
+                        localStorage.setItem('PRISM_INSTALLED', 'true');
+                        syncInstalledClass(true);
+                    }
+                }).catch(() => { });
+            }
+
+            return {
+                get isStandalone() { return localStorage.getItem('PRISM_INSTALLED') === 'true'; },
+                markInstalled() {
+                    localStorage.setItem('PRISM_INSTALLED', 'true');
+                    syncInstalledClass(true);
+                }
+            };
         })();
 
         window.addEventListener('appinstalled', () => {
-            localStorage.setItem('PRISM_INSTALLED', 'true');
+            window.__PRISM_ENV__.markInstalled();
         });
 
         function triggerPWAInstall() {

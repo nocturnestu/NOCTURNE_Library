@@ -1,5 +1,5 @@
 {
-  "release_date": "July 1, 2026",
-  "title": "First Day of the Month in Patch Schedule",
-  "message": "Hello! We've made changes to one of our apps inside Prism, like Sand Box 3D, Rift Runners 2D, etc. We also changed how Prism works for your experience too."
+  "release_date": "July 5, 2026",
+  "title": "Prism UI fixes",
+  "message": "We made a critical fix to your Prism experience on both of your chromium browser and Prism itself (installed) to properly display UI elements. Usually small hotfixes rolled out this midnight."
 }

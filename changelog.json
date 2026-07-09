@@ -1,5 +1,5 @@
 {
-  "release_date": "July 5, 2026",
-  "title": "Prism UI fixes",
-  "message": "We made a critical fix to your Prism experience on both of your chromium browser and Prism itself (installed) to properly display UI elements. Usually small hotfixes rolled out this midnight."
+  "release": "Minor Hotfix",
+  "title": "jsDelivr CDN Asset Links change",
+  "message": "Prism and Sand Box 3D now have their assets hosted to jsDelivr instead of GitHub's Raw CDN for a smoother download experience, which also fixes some rate limiting errors that came from GitHub's end."
 }

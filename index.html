@@ -2475,7 +2475,7 @@
                         dlTitle.textContent = 'COMPLETE';
                         dlSub.textContent = errors > 0 ? `Done with ${errors} skip${errors !== 1 ? 's' : ''}` : 'All assets cached';
                         if (freshVersion) localStorage.setItem('PRISM_SW_VERSION', freshVersion);
-                        setTimeout(() => { window.location.reload(); }, 1200);
+                        setTimeout(() => { window.location.reload(); }, 2500);
                     }
                 }
             };
@@ -2978,8 +2978,11 @@
                 if (mobileTrigger) mobileTrigger.style.display = 'inline-flex';
                 if (desktopTrigger) desktopTrigger.style.display = 'inline-flex';
 
-                fetch('changelog.json')
-                    .then(res => res.json())
+                fetch('changelog.json?t=' + Date.now(), { cache: 'no-store' })
+                    .then(res => {
+                        if (!res.ok) throw new Error('Network response was not ok');
+                        return res.json();
+                    })
                     .then(data => {
                         document.getElementById('cl-modal-version').textContent = data.release;
                         document.getElementById('cl-modal-title').textContent = data.title;

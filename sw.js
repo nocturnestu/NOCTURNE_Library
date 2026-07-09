@@ -1,9 +1,8 @@
-const CACHE_NAME = 'PRISM-v2.1.0';
+const CACHE_NAME = 'PRISM-v2.2.0';
 
 const CORE_URLS = [
     '/',
     '/index.html',
-    '/changelog.json',
     './SandBox3D/sb3d_page',
     './RiftRunners2D/rr2d_page',
     './RiftRunners2D/RiftRunners2D',

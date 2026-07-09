@@ -2115,6 +2115,15 @@
             </div>
         </div>
 
+        <div class="settings-item" id="reset-install-status-item">
+            <div class="item-title">Reset Install Status</div>
+            <div class="item-subtitle">Use this if Prism still thinks it's installed after you removed it</div>
+            <button class="install-btn" id="reset-install-btn" onclick="resetPrismInstallStatus(); createRipple(event)">
+                <span class="material-icons-round">restart_alt</span>
+                Reset Status
+            </button>
+        </div>
+
         <div id="sw-version-display" style="display: none; position: absolute; top: 16px; right: 20px; font-size: 11px; opacity: 0.35; font-family: 'Space Grotesk', sans-serif; pointer-events: none; user-select: none;"></div>
     </div>
 
@@ -2198,11 +2207,24 @@
                 }).catch(() => { });
             }
 
+            if (flagged && !liveStandalone && navigator.getInstalledRelatedApps) {
+                navigator.getInstalledRelatedApps().then(apps => {
+                    if (apps.length === 0) {
+                        localStorage.removeItem('PRISM_INSTALLED');
+                        syncInstalledClass(false);
+                    }
+                }).catch(() => { });
+            }
+
             return {
                 get isStandalone() { return localStorage.getItem('PRISM_INSTALLED') === 'true'; },
                 markInstalled() {
                     localStorage.setItem('PRISM_INSTALLED', 'true');
                     syncInstalledClass(true);
+                },
+                unmarkInstalled() {
+                    localStorage.removeItem('PRISM_INSTALLED');
+                    syncInstalledClass(false);
                 }
             };
         })();
@@ -2217,6 +2239,11 @@
             _pwaInstallPrompt.userChoice.then(function (result) {
                 if (result.outcome === 'accepted') _pwaInstallPrompt = null;
             });
+        }
+
+        function resetPrismInstallStatus() {
+            if (!confirm('Reset install status?\n\nOnly do this if you actually uninstalled Prism. This will bring back install prompts and hidden setup UI.')) return;
+            window.__PRISM_ENV__.unmarkInstalled();
         }
 
         (function () {

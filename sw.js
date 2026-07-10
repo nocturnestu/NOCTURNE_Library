@@ -1,4 +1,4 @@
-const CACHE_NAME = 'PRISM-v2.3.1';
+const CACHE_NAME = 'PRISM-v2.3.2';
 
 const CORE_URLS = [
     '/',
@@ -92,7 +92,7 @@ self.addEventListener('install', e => {
                         return;
                     }
 
-                    const response = await fetch(absoluteUrl);
+                    const response = await fetch(absoluteUrl, { cache: 'reload' });
                     if (response.status !== 200) {
                         console.warn("Skipping non-200 asset:", absoluteUrl, response.status);
                         await broadcastProgress();

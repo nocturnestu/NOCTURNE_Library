@@ -1,5 +1,5 @@
 {
-  "release": "Technical Hotfix",
-  "title": "Prism Download Mode screen fixed",
-  "message": "Fixed an issue where the Startup screen intercepts the Download Mode screen when updating Prism to a new version."
+  "release": "Minor Change",
+  "title": "Prism UI tweaks",
+  "message": "Glass Cards can now be dragged, and stretched however you want, they also fall off when you grab one Glass Card and shake it aggressively. Note: To experience this feature, please 'reinstall' Prism at 'Settings' (see the Settings Icon) > 'Update or Reinstall Prism'"
 }

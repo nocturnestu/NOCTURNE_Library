@@ -1671,6 +1671,10 @@
             line-height: 1.7;
         }
 
+        .glass-card, .dt-glass-card {
+            touch-action: none;
+        }
+
     </style>
 </head>
 
@@ -1750,7 +1754,7 @@
                 <a href="#" class="changelog-trigger" id="changelog-trigger-mobile"
                     onclick="openModal('modal-changelog'); createRipple(event); return false;" style="display:none; margin-top:12px;">
                     <i class="material-icons-round">new_releases</i>
-                    <span>What's new in this version</span>
+                    <span>See what's new to Prism</span>
                 </a>
                 <div class="settings-trigger" onclick="toggleSettings()" style="top: 10px; right: 10px;">
                     <i class="material-icons-round">settings</i>
@@ -1901,7 +1905,7 @@
             <div class="library-header-wrap">
                 <h2 class="library-title">Games</h2>
             </div>
-            <p style="font-size: 13px; color: var(--text-sub); margin-bottom: 8px;">Our NOCTURNE flagships, built for immersive interactivity.</p>
+            <p style="font-size: 13px; color: var(--text-sub); margin-bottom: 8px;">Our main stars of NOCTURNE, heavily maintained to be stable just for you.</p>
     
             <div class="library-grid">
                 <a href="./SandBox3D/sb3d_page" class="list-item" onclick="createRipple(event)">
@@ -1931,13 +1935,13 @@
                 <i class="material-icons-round">arrow_back</i> Back
             </div>
             <div class="library-header-wrap">
-                <h2 class="library-title">Changelog</h2>
+                <h2 class="library-title">Prism Changelogs</h2>
             </div>
             <div class="changelog-modal-body">
-                <div class="changelog-version-badge" id="cl-modal-version">v0.0.0</div>
-                <h3 class="changelog-modal-title" id="cl-modal-title">Loading...</h3>
+                <div class="changelog-version-badge" id="cl-modal-version">Thinking...</div>
+                <h3 class="changelog-modal-title" id="cl-modal-title">Thinking...</h3>
                 <p class="changelog-modal-text" id="cl-modal-msg">
-                    Fetching the latest brainrot from the lab...
+                    Thinking...
                 </p>
             </div>
         </div>
@@ -1951,7 +1955,7 @@
             <div class="library-header-wrap">
                 <h2 class="library-title">Apps & Utilities</h2>
             </div>
-            <p style="font-size: 13px; color: var(--text-sub); margin-bottom: 8px;">Experimental webpages, shown as 'tools' or just for show.</p>
+            <p style="font-size: 13px; color: var(--text-sub); margin-bottom: 8px;">Experimental apps.</p>
     
             <div class="library-grid">
                 <a href="./Other/ismycompteureron" class="list-item"
@@ -2007,8 +2011,7 @@
             <div class="library-header-wrap">
                 <h2 class="library-title">Tools</h2>
             </div>
-            <p style="font-size: 13px; color: var(--text-sub); margin-bottom: 8px;">Standalone utilities, scanners, and
-                scripts for the lab.</p>
+            <p style="font-size: 13px; color: var(--text-sub); margin-bottom: 8px;">Essential tools tailored for you.</p>
     
             <div class="library-grid">
                 <a href="./Tools/lapscan" class="list-item" onclick="createRipple(event)">
@@ -2034,7 +2037,7 @@
             <i class="material-icons-round">arrow_back</i> Back
         </div>
         <h1 style="font-family: 'Space Grotesk';">Settings</h1>
-        <p style="font-size: 12px; color: var(--text-sub); margin-bottom: 12px;">Switch up the vibe for your Prism. Changes take effect instantly.</p>
+        <p style="font-size: 12px; color: var(--text-sub); margin-bottom: 12px;">Prism's settings, tweak however you want. Changes take effect right before you blink.</p>
 
         <div style="margin-top: 24px;">
             <h3 style="font-family: 'Space Grotesk'; font-size: 16px; margin-bottom: 12px;">Visuals</h3>
@@ -2049,7 +2052,7 @@
                 <i class="material-icons-round" id="toggle-icon">toggle_on</i>
             </div>
 
-            <h3 style="font-family: 'Space Grotesk'; font-size: 16px; margin-top: 20px; margin-bottom: 8px;">GIF Preset</h3>
+            <h3 style="font-family: 'Space Grotesk'; font-size: 16px; margin-top: 20px; margin-bottom: 8px;">GIF Presets</h3>
             <select id="gif-selector" class="setting-select" onchange="handleGifSelect(this.value)">
                 <option value="gif1">Prism Default</option>
                 <option value="gif2">Preset GIF 1</option>
@@ -2065,7 +2068,7 @@
             </div>
         </div>
 
-        <h3 style="font-family: 'Space Grotesk'; font-size: 16px; margin-top: 24px; margin-bottom: 8px;">Theme Preset</h3>
+        <h3 style="font-family: 'Space Grotesk'; font-size: 16px; margin-top: 24px; margin-bottom: 8px;">Theme Presets</h3>
         <select id="theme-selector" class="setting-select" onchange="changeTheme(this.value)">
             <option value="blurple">Shamanic Blurple (Default)</option>
             <option value="amber">Wild Amber</option>
@@ -2081,7 +2084,7 @@
                 <div style="display: flex; align-items: center; gap: 14px;">
                     <i class="material-icons-round item-icon">blur_off</i>
                     <div class="item-content">
-                        <div class="item-title">Reduce Blur</div>
+                        <div class="item-title">Reduce Blur effects</div>
                     </div>
                 </div>
                 <i class="material-icons-round" id="icon-reduce-blur">toggle_off</i>
@@ -2090,7 +2093,7 @@
                 <div style="display: flex; align-items: center; gap: 14px;">
                     <i class="material-icons-round item-icon">motion_photos_off</i>
                     <div class="item-content">
-                        <div class="item-title">Disable Animations</div>
+                        <div class="item-title">Reduced Motion</div>
                     </div>
                 </div>
                 <i class="material-icons-round" id="icon-no-anim">toggle_off</i>
@@ -2103,15 +2106,15 @@
             <i class="material-icons-round item-icon">refresh</i>
             <div class="item-content">
                 <div class="item-title">Update or Reinstall Prism</div>
-                <div class="item-subtitle">Clicking will Update or Reinstall Prism</div>
+                <div class="item-subtitle">Updates Prism to the latest build, or reinstall it</div>
             </div>
         </button>
 
         <div id="recache-game-toggle" onclick="toggleIncludeGames()">
             <i class="material-icons-round" id="icon-include-games">toggle_off</i>
             <div class="item-content">
-                <div class="item-title">Include Game Assets for Update/Reinstall</div>
-                <div class="item-subtitle">Enabling this includes Game files</div>
+                <div class="item-title">Include Additional Assets</div>
+                <div class="item-subtitle">Enabling allows Prism to update other assets, may consume more data.</div>
             </div>
         </div>
 
@@ -2126,8 +2129,8 @@
             <i class="material-icons-round dl-icon-wrap" id="dl-main-icon">download</i>
         </div>
         <div class="loader-wordmark show" style="opacity: 1; transform: translateY(0);">
-            <div class="loader-wordmark-name" id="dl-phase-title">RE-CACHING</div>
-            <div class="loader-wordmark-sub" id="dl-phase-sub">Preparing...</div>
+            <div class="loader-wordmark-name" id="dl-phase-title">Download Mode</div>
+            <div class="loader-wordmark-sub" id="dl-phase-sub">Thinking...</div>
         </div>
         <div class="loader-bar-wrap show" style="width: 220px;">
             <div class="loader-bar" id="download-bar"></div>
@@ -2135,21 +2138,21 @@
         <div class="dl-pipeline" id="dl-pipeline">
             <div class="dl-pipeline-row" id="dl-phase-clear">
                 <span class="dl-phase-icon material-icons-round">pending</span>
-                <span class="dl-phase-label">Clear old cache &amp; DB</span>
-                <span class="dl-phase-status">Waiting</span>
+                <span class="dl-phase-label">Clear IDB/Cache</span>
+                <span class="dl-phase-status">Pondering...</span>
             </div>
             <div class="dl-pipeline-row" id="dl-phase-download">
                 <span class="dl-phase-icon material-icons-round">pending</span>
-                <span class="dl-phase-label">Download assets</span>
-                <span class="dl-phase-status">Waiting</span>
+                <span class="dl-phase-label">Download files</span>
+                <span class="dl-phase-status">Pondering...</span>
             </div>
             <div class="dl-pipeline-row" id="dl-phase-cache">
                 <span class="dl-phase-icon material-icons-round">pending</span>
-                <span class="dl-phase-label">Write to cache</span>
-                <span class="dl-phase-status">Waiting</span>
+                <span class="dl-phase-label">Write them to IDB/Cache</span>
+                <span class="dl-phase-status">Pondering...</span>
             </div>
         </div>
-        <div class="dl-tip-box" id="download-tip">Loading lab logs...</div>
+        <div class="dl-tip-box" id="download-tip">All the tips goes here...</div>
     </div>
 
     <script>
@@ -2315,7 +2318,7 @@
 
         function confirmAndRecache() {
             const gameWarning = _includeGames ? '\n\nGame assets included for download.' : '\n\nCore files only. Game assets excluded.';
-            if (!confirm(`Download Mode\nCAUTION!\n\nThis will purge selected assets and re-download them.${gameWarning}\n\nClick OK to proceed\nClick Cancel to do nothing`)) return;
+            if (!confirm(`Prism Download Mode\nCAUTION!\n\nThis will purge selected assets and re-download them.${gameWarning}\n\nClick OK to proceed\nClick Cancel to do nothing`)) return;
             clearAndRecache('full');
         }
 
@@ -2422,7 +2425,7 @@
                 clearTimeout(watchdogTimer);
                 watchdogTimer = setTimeout(() => {
                     if (finished) return;
-                    console.warn('SW comms watchdog: no progress in 20s, forcing reload');
+                    console.warn('[Prism Download Mode]: No progress after 20s, proceeding restart...');
                     finished = true;
                     clearInterval(tipInterval);
                     dlTitle.textContent = 'STALLED';
@@ -2461,7 +2464,7 @@
 
                     if (progress > 0 && progress < 100) {
                         setPhase('dl-phase-download', 'active', `${processed} / ${total}`, 'sync');
-                        dlTitle.textContent = 'CACHING';
+                        dlTitle.textContent = 'PROCESSING';
                         dlSub.textContent = `${progress}%${errors > 0 ? ` · ${errors} skipped` : ''}`;
                     }
 
@@ -2473,7 +2476,7 @@
                         setPhase('dl-phase-download', 'done', 'Done', 'check_circle');
                         setPhase('dl-phase-cache', errors > 0 ? 'error' : 'done', errors > 0 ? `${errors} skipped` : 'Done', errors > 0 ? 'warning' : 'check_circle');
                         dlTitle.textContent = 'COMPLETE';
-                        dlSub.textContent = errors > 0 ? `Done with ${errors} skip${errors !== 1 ? 's' : ''}` : 'All assets cached';
+                        dlSub.textContent = errors > 0 ? `Done with ${errors} skip${errors !== 1 ? 's' : ''}` : 'All files cached, proceeding restart...';
                         if (freshVersion) localStorage.setItem('PRISM_SW_VERSION', freshVersion);
                         setTimeout(() => { window.location.reload(); }, 2500);
                     }
@@ -2484,8 +2487,8 @@
             resetWatchdog();
 
             try {
-                dlTitle.textContent = 'CLEARING';
-                dlSub.textContent = 'Purging old cache & storage';
+                dlTitle.textContent = 'PURGING';
+                dlSub.textContent = 'Deleting old IDB/Cache content...';
                 setPhase('dl-phase-clear', 'active', 'Running', 'sync');
 
                 const CORE_URLS = [
@@ -2613,7 +2616,7 @@
                 await navigator.serviceWorker.register(swUrl);
 
             } catch (err) {
-                console.error('Error during re-cache:', err);
+                console.error('[Prism Download Mode]: Prism reinstall error: ', err);
                 finished = true;
                 clearTimeout(watchdogTimer);
                 clearInterval(tipInterval);
@@ -2859,9 +2862,9 @@
             const isStandalone = window.__PRISM_ENV__.isStandalone;
 
             const taglines = [
-                'Hello World!',
-                'Welcome',
-                'Prism pondering...',
+                'Making thoughts...',
+                'Progressing...',
+                'Deeply thinking...',
                 'Waking up...',
                 'Thinking...',
             ];
@@ -2990,7 +2993,7 @@
 
                 fetch('changelog.json?t=' + Date.now(), { cache: 'no-store' })
                     .then(res => {
-                        if (!res.ok) throw new Error('Network response was not ok');
+                        if (!res.ok) throw new Error('[Prism Logs]: Network error');
                         return res.json();
                     })
                     .then(data => {
@@ -2999,12 +3002,135 @@
                         document.getElementById('cl-modal-msg').textContent = data.message;
                     })
                     .catch(err => {
-                        console.error('Changelog fetch failed bro', err);
+                        console.error('[Prism Logs]: Could not fetch the latest Prism changelogs...', err);
                         document.getElementById('cl-modal-msg').textContent =
-                            'Failed to fetch the changelog. Try again later.';
+                            'Prism is unable to fetch new contents for changelogs, try again next time when you have internet connection...';
                     });
             }
         });
+
+        (function initCardPhysics() {
+            let isFalling = false;
+
+            const triggerFall = () => {
+                if (isFalling) return;
+                isFalling = true;
+
+                const allCards = document.querySelectorAll('.glass-card, .dt-glass-card');
+
+                allCards.forEach(c => {
+                    const randomRot = (Math.random() - 0.5) * 60;
+                    c.style.transition = 'transform 0.8s cubic-bezier(0.55, 0.085, 0.68, 0.53), opacity 0.6s ease';
+                    c.style.transform = `translateY(150vh) rotate(${randomRot}deg)`;
+                    c.style.opacity = '0';
+                    c.style.pointerEvents = 'none';
+                });
+
+                setTimeout(() => {
+                    allCards.forEach(c => {
+                        c.style.transition = 'transform 0.8s var(--spring), opacity 0.8s ease';
+                        c.style.transform = '';
+                        c.style.opacity = '';
+                        c.style.pointerEvents = '';
+                    });
+
+                    setTimeout(() => {
+                        allCards.forEach(c => {
+                            c.style.transition = '';
+                        });
+                        isFalling = false;
+                    }, 800);
+                }, 3000);
+            };
+
+            document.querySelectorAll('.glass-card, .dt-glass-card').forEach(card => {
+                let isDragging = false;
+                let wasDragged = false;
+                let startX = 0;
+                let startY = 0;
+
+                let lastX = 0;
+                let lastDir = 0;
+                let shakeCount = 0;
+                let lastShakeTime = 0;
+
+                card.addEventListener('pointerdown', e => {
+                    if (document.body.classList.contains('no-anim') || isFalling) return;
+                    isDragging = true;
+                    wasDragged = false;
+                    startX = e.clientX;
+                    startY = e.clientY;
+                    lastX = e.clientX;
+                    shakeCount = 0;
+                    lastShakeTime = Date.now();
+
+                    card.style.transition = 'none';
+                    card.style.zIndex = '20';
+                    card.setPointerCapture(e.pointerId);
+                });
+
+                card.addEventListener('pointermove', e => {
+                    if (!isDragging) return;
+
+                    const rawDx = e.clientX - startX;
+                    const rawDy = e.clientY - startY;
+
+                    if (Math.abs(rawDx) > 5 || Math.abs(rawDy) > 5) {
+                        wasDragged = true;
+                    }
+
+                    const currentX = e.clientX;
+                    const deltaX = currentX - lastX;
+                    const now = Date.now();
+
+                    if (Math.abs(deltaX) > 12) {
+                        const dir = Math.sign(deltaX);
+                        if (dir !== lastDir && lastDir !== 0) {
+                            shakeCount++;
+                            lastShakeTime = now;
+
+                            if (shakeCount > 10) {
+                                releaseCard();
+                                triggerFall();
+                                return;
+                            }
+                        }
+                        lastDir = dir;
+                        lastX = currentX;
+                    }
+
+                    if (now - lastShakeTime > 250) {
+                        shakeCount = 0;
+                    }
+
+                    const dx = rawDx * 0.35;
+                    const dy = rawDy * 0.35;
+                    const tilt = dx * 0.08;
+
+                    card.style.transform = `translate(${dx}px, ${dy}px) rotate(${tilt}deg) scale(1.03)`;
+                });
+
+                const releaseCard = () => {
+                    if (!isDragging) return;
+                    isDragging = false;
+                    if (!isFalling) {
+                        card.style.transition = '';
+                        card.style.transform = '';
+                    }
+                    card.style.zIndex = '';
+                };
+
+                card.addEventListener('pointerup', releaseCard);
+                card.addEventListener('pointercancel', releaseCard);
+
+                card.addEventListener('click', e => {
+                    if (wasDragged) {
+                        e.preventDefault();
+                        e.stopImmediatePropagation();
+                    }
+                }, true);
+            });
+        })();
     </script>
     <script>
         if ('serviceWorker' in navigator) {
@@ -3022,7 +3148,7 @@
 
                     if (savedVersion !== liveVersion) {
                         if (isStandalone) {
-                            const ok = confirm(`Prism Update\n\nNew version detected: ${liveVersion}\n\nDo you want to update now?\n\nClick OK to reinstall now\nClick Cancel to do nothing`);
+                            const ok = confirm(`Prism Download Mode\n\nNew version detected: ${liveVersion}\n\nDo you want to update now?\n\nClick OK to reinstall now\nClick Cancel to do nothing`);
                             if (ok) {
                                 killStartupLoader();
                                 localStorage.setItem(SW_VERSION_KEY, liveVersion);

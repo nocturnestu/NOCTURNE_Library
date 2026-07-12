@@ -1740,8 +1740,7 @@
                 </div>
                 <div class="hero-divider"></div>
                 <p class="hero-desc">
-                    Building <strong>browser-native 3D</strong> experiences, modular sandbox systems, and creative tools that showcase
-                    what's possible on the modern web.
+                    NOCTURNE's <strong>Prism</strong>, an all-in-one hub for every projects made for everyone.
                 </p>
                 <a href="https://github.com/nocturnestu" target="_blank" class="cta-btn" onclick="createRipple(event)">
                     <i class="material-icons-round">code</i>
@@ -1823,8 +1822,7 @@
                 </div>
                 <div class="dt-divider"></div>
                 <p class="dt-hero-desc">
-                    Building <strong>browser-native 3D</strong> experiences, modular sandbox systems, and creative tools that showcase
-                    what's possible on the modern web.
+                    NOCTURNE's <strong>Prism</strong>, an all-in-one hub for every projects made for everyone.
                 </p>
                 <a href="https://github.com/nocturnestu" target="_blank" class="cta-btn" onclick="createRipple(event)">
                     <i class="material-icons-round">code</i>
@@ -2037,7 +2035,7 @@
             <i class="material-icons-round">arrow_back</i> Back
         </div>
         <h1 style="font-family: 'Space Grotesk';">Settings</h1>
-        <p style="font-size: 12px; color: var(--text-sub); margin-bottom: 12px;">Prism's settings, tweak however you want. Changes take effect right before you blink.</p>
+        <p style="font-size: 12px; color: var(--text-sub); margin-bottom: 12px;">Prism's settings, tweak whatever you want. All changes take effect before you even notice it.</p>
 
         <div style="margin-top: 24px;">
             <h3 style="font-family: 'Space Grotesk'; font-size: 16px; margin-bottom: 12px;">Visuals</h3>
@@ -2054,13 +2052,13 @@
 
             <h3 style="font-family: 'Space Grotesk'; font-size: 16px; margin-top: 20px; margin-bottom: 8px;">GIF Presets</h3>
             <select id="gif-selector" class="setting-select" onchange="handleGifSelect(this.value)">
-                <option value="gif1">Prism Default</option>
-                <option value="gif2">Preset GIF 1</option>
-                <option value="gif3">Preset GIF 2</option>
-                <option value="gif4">Preset GIF 3</option>
-                <option value="gif5">Preset GIF 4</option>
-                <option value="gif6">Preset GIF 5</option>
-                <option value="custom">Custom URL (GIPHY Recommended)</option>
+                <option value="gif1">Default GIF</option>
+                <option value="gif2">GIF 1</option>
+                <option value="gif3">GIF 2</option>
+                <option value="gif4">GIF 3</option>
+                <option value="gif5">GIF 4</option>
+                <option value="gif6">GIF 5</option>
+                <option value="custom">"I'll add the link myself" (GIPHY Recommended)</option>
             </select>
             <div id="gif-custom-url-wrap">
                 <input id="gif-custom-url-input" type="url" placeholder="https://media.giphy.com/..." />
@@ -2070,11 +2068,11 @@
 
         <h3 style="font-family: 'Space Grotesk'; font-size: 16px; margin-top: 24px; margin-bottom: 8px;">Theme Presets</h3>
         <select id="theme-selector" class="setting-select" onchange="changeTheme(this.value)">
-            <option value="blurple">Shamanic Blurple (Default)</option>
-            <option value="amber">Wild Amber</option>
-            <option value="emerald">Loyal Emerald</option>
-            <option value="ruby">Great Ruby</option>
-            <option value="mono">Nostalgic</option>
+            <option value="blurple">Good Vibes (Default)</option>
+            <option value="amber">Bright Amber</option>
+            <option value="emerald">Emerald</option>
+            <option value="ruby">Vibrant Ruby</option>
+            <option value="mono">Nostalgia</option>
         </select>
 
         <h3 style="font-family: 'Space Grotesk'; font-size: 16px; margin-top: 24px; margin-bottom: 12px;">Performance</h3>
@@ -2093,7 +2091,7 @@
                 <div style="display: flex; align-items: center; gap: 14px;">
                     <i class="material-icons-round item-icon">motion_photos_off</i>
                     <div class="item-content">
-                        <div class="item-title">Reduced Motion</div>
+                        <div class="item-title">Reduced motion</div>
                     </div>
                 </div>
                 <i class="material-icons-round" id="icon-no-anim">toggle_off</i>
@@ -2114,7 +2112,7 @@
             <i class="material-icons-round" id="icon-include-games">toggle_off</i>
             <div class="item-content">
                 <div class="item-title">Include Additional Assets</div>
-                <div class="item-subtitle">Enabling allows Prism to update other assets, may consume more data.</div>
+                <div class="item-subtitle">Enabling this allows Prism to update other assets, may consume more data.</div>
             </div>
         </div>
 
@@ -2318,7 +2316,7 @@
 
         function confirmAndRecache() {
             const gameWarning = _includeGames ? '\n\nGame assets included for download.' : '\n\nCore files only. Game assets excluded.';
-            if (!confirm(`Prism Download Mode\nCAUTION!\n\nThis will purge selected assets and re-download them.${gameWarning}\n\nClick OK to proceed\nClick Cancel to do nothing`)) return;
+            if (!confirm(`Prism Download Mode\nCAUTION!\n\nPrism will delete old content and replace them with newer ones. Proceed?${gameWarning}\n\nYes, proceed. (OK)\nNo, do not proceed. (Cancel)`)) return;
             clearAndRecache('full');
         }
 
@@ -2428,7 +2426,7 @@
                     console.warn('[Prism Download Mode]: No progress after 20s, proceeding restart...');
                     finished = true;
                     clearInterval(tipInterval);
-                    dlTitle.textContent = 'STALLED';
+                    dlTitle.textContent = 'Stalled';
                     dlSub.textContent = 'Reloading anyway...';
                     setTimeout(() => { window.location.reload(); }, 1500);
                 }, 20000);
@@ -2447,7 +2445,7 @@
                     dlBar.style.transition = 'width 0.15s linear';
                     setPhase('dl-phase-download', 'active', `0 / ${total}`, 'sync');
                     setPhase('dl-phase-cache', 'active', 'Writing', 'sync');
-                    dlTitle.textContent = 'DOWNLOADING';
+                    dlTitle.textContent = 'Downloading';
                     dlSub.textContent = `Fetching ${total} assets`;
                     return;
                 }
@@ -2475,8 +2473,8 @@
                         navigator.serviceWorker.removeEventListener('message', _cacheProgressHandler);
                         setPhase('dl-phase-download', 'done', 'Done', 'check_circle');
                         setPhase('dl-phase-cache', errors > 0 ? 'error' : 'done', errors > 0 ? `${errors} skipped` : 'Done', errors > 0 ? 'warning' : 'check_circle');
-                        dlTitle.textContent = 'COMPLETE';
-                        dlSub.textContent = errors > 0 ? `Done with ${errors} skip${errors !== 1 ? 's' : ''}` : 'All files cached, proceeding restart...';
+                        dlTitle.textContent = 'Complete';
+                        dlSub.textContent = errors > 0 ? `Done with ${errors} skip${errors !== 1 ? 's' : ''}` : 'Finished, proceeding restart...';
                         if (freshVersion) localStorage.setItem('PRISM_SW_VERSION', freshVersion);
                         setTimeout(() => { window.location.reload(); }, 2500);
                     }
@@ -2487,7 +2485,7 @@
             resetWatchdog();
 
             try {
-                dlTitle.textContent = 'PURGING';
+                dlTitle.textContent = 'Purging';
                 dlSub.textContent = 'Deleting old IDB/Cache content...';
                 setPhase('dl-phase-clear', 'active', 'Running', 'sync');
 
@@ -2643,7 +2641,7 @@
                 document.body.classList.add('no-gif');
                 icon.textContent = 'block';
                 icon.style.color = 'var(--text-muted)';
-                status.textContent = 'Offline (Disabled)';
+                status.textContent = 'Network error (Disabled)';
                 return;
             }
 
@@ -3148,7 +3146,7 @@
 
                     if (savedVersion !== liveVersion) {
                         if (isStandalone) {
-                            const ok = confirm(`Prism Download Mode\n\nNew version detected: ${liveVersion}\n\nDo you want to update now?\n\nClick OK to reinstall now\nClick Cancel to do nothing`);
+                            const ok = confirm(`Prism Download Mode\n\nPrism found new content: ${liveVersion}\n\nDo you want to update now?\n\nYes, update my Prism. (OK)\nNo, do not update my Prism yet. (Cancel)`);
                             if (ok) {
                                 killStartupLoader();
                                 localStorage.setItem(SW_VERSION_KEY, liveVersion);

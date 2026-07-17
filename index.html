@@ -3185,18 +3185,18 @@
         async function handleInstallationState() {
             const isInstalled = await checkPrismInstallation();
 
-                    if (isInstalled) {
-                        showInstallationPrompt();
-                    }
-                }
+            if (isInstalled) {
+                showInstallationPrompt();
+            }
+        }
 
-                function showInstallationPrompt() {
-                    const existing = document.getElementById('prism-install-prompt');
-                    if (existing) existing.remove();
+        function showInstallationPrompt() {
+            const existing = document.getElementById('prism-install-prompt');
+            if (existing) existing.remove();
 
-                    const overlay = document.createElement('div');
-                    overlay.id = 'prism-install-prompt';
-                    overlay.style.cssText = `
+            const overlay = document.createElement('div');
+            overlay.id = 'prism-install-prompt';
+            overlay.style.cssText = `
                         position: fixed;
                         top: 0;
                         left: 0;
@@ -3210,8 +3210,8 @@
                         backdrop-filter: blur(4px);
                     `;
 
-                    const modal = document.createElement('div');
-                    modal.style.cssText = `
+            const modal = document.createElement('div');
+            modal.style.cssText = `
                         background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
                         border: 2px solid #00d4ff;
                         border-radius: 12px;
@@ -3223,7 +3223,7 @@
                         color: #fff;
                     `;
 
-                    modal.innerHTML = `
+            modal.innerHTML = `
                         <h2 style="margin: 0 0 16px 0; font-size: 28px; color: #00d4ff;">PRISM Already Installed</h2>
                         <p style="margin: 0 0 24px 0; font-size: 16px; color: #ccc; line-height: 1.6;">
                             You've got PRISM running on your system. Would you like to launch the app or continue browsing here?
@@ -3256,45 +3256,57 @@
                         </div>
                     `;
 
-                    overlay.appendChild(modal);
-                    document.body.appendChild(overlay);
+            overlay.appendChild(modal);
+            document.body.appendChild(overlay);
 
-                    document.getElementById('btn-launch-app').addEventListener('click', () => {
-                        launchPrismApp();
-                        overlay.remove();
-                    });
+            document.getElementById('btn-launch-app').addEventListener('click', () => {
+                launchPrismApp();
+                overlay.remove();
+            });
 
-                    document.getElementById('btn-stay-here').addEventListener('click', () => {
-                        localStorage.setItem('PRISM_SKIP_PROMPT', 'true');
-                        overlay.remove();
-                    });
+            document.getElementById('btn-stay-here').addEventListener('click', () => {
+                localStorage.setItem('PRISM_SKIP_PROMPT', 'true');
+                overlay.remove();
+            });
 
-                    overlay.addEventListener('click', (e) => {
-                        if (e.target === overlay) {
-                            overlay.remove();
-                        }
-                    });
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    overlay.remove();
                 }
+            });
+        }
 
-                function launchPrismApp() {
-                    if (navigator.getInstalledRelatedApps) {
-                        navigator.getInstalledRelatedApps().then(apps => {
-                            if (apps.length > 0) {
-                                apps[0].launch();
-                            } else {
-                                window.location.href = '/';
-                                setTimeout(() => window.location.reload(), 500);
-                            }
-                        }).catch(() => {
-                            window.location.href = '/';
-                            setTimeout(() => window.location.reload(), 500);
-                        });
+        function launchPrismApp() {
+            if (navigator.getInstalledRelatedApps) {
+                navigator.getInstalledRelatedApps().then(apps => {
+                    if (apps.length > 0) {
+                        apps[0].launch();
                     } else {
                         window.location.href = '/';
                         setTimeout(() => window.location.reload(), 500);
                     }
-                }
-        
+                }).catch(() => {
+                    window.location.href = '/';
+                    setTimeout(() => window.location.reload(), 500);
+                });
+            } else {
+                window.location.href = '/';
+                setTimeout(() => window.location.reload(), 500);
+            }
+        }
+
+        if (window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches) {
+            localStorage.setItem('PRISM_APP_LAUNCHED', 'true');
+            localStorage.removeItem('PRISM_SKIP_PROMPT');
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const skipPrompt = localStorage.getItem('PRISM_SKIP_PROMPT') === 'true';
+
+            if (!skipPrompt) {
+                await handleInstallationState();
+            }
+        });
     </script>
     <script>
         if ('serviceWorker' in navigator) {

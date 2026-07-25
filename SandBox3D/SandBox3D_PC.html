@@ -742,7 +742,7 @@
         <div class="loader-content">
             <div class="loader-spinner"></div>
             <div class="loader-text">Sand Box 3D for PC</div>
-            <div class="loader-subtext-version">Version: v26.07.09</div>
+            <div class="loader-subtext-version">Version: v26.07.24</div>
             <div class="loader-subtext">Setting up your sandbox...</div>
             <button id="skip-loading-btn" onclick="skipLoading()">Skip Setup</button>
         </div>
@@ -4857,12 +4857,16 @@
                             lowFpsCounter++;
 
                             if (lowFpsCounter > 3) {
+                                isSafeguardInCooldown = true;
                                 const restart = confirm(SB3D_LANGS[activeLang].toastSafeguard);
 
                                 if (restart) {
+                                    console.warn("[SB3D] Safeguard: Clicked OK. Reloading (5s guard just in case)...");
+                                    setTimeout(() => {
+                                        isSafeguardInCooldown = false;
+                                    }, 5000);
                                     window.location.reload();
                                 } else {
-                                    isSafeguardInCooldown = true;
                                     lowFpsCounter = 0;
                                     console.warn("[SB3D] Safeguard: Clicked CANCEL. Starting 60s cooldown...");
 

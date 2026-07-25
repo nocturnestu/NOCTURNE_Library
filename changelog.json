@@ -1,5 +1,5 @@
 {
-  "release": "Minor Change",
-  "title": "Prism UI tweaks",
-  "message": "Glass Cards can now be dragged, and stretched however you want, they also fall off when you grab one Glass Card and shake it aggressively. Note: To experience this feature, please 'reinstall' Prism at 'Settings' (see the Settings Icon) > 'Update or Reinstall Prism'"
+  "release": "BIG Tweaks n' Stuff",
+  "title": "Prism Expansion; Prism-panion Phase 1",
+  "message": "New tool: PixelPeek, an image metadata extractor tool, now released to the public. New Prism feature (Developer Preview Mode exclusive feature, must toggle inside settings): Custom Video Background, you can now set your background as any video you upload, gets stored in cache, shows anywhere like Sand Box 3D and Rift Runners 2D launchers. We also fixed a certain bug on Sand Box 3D too. Introduced 'Developer Preview Mode', enables experimental features across Prism and other apps."
 }

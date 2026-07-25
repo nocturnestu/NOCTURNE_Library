@@ -1,4 +1,4 @@
-const CACHE_NAME = 'PRISM-v2.4.0';
+const CACHE_NAME = 'PRISM-v2.5.0';
 
 const CORE_URLS = [
     '/',
@@ -13,7 +13,9 @@ const CORE_URLS = [
     './Other/notmoving',
     './Other/gifview',
     './Other/mathlol',
+    './Other/coinsort',
     './Tools/lapscan',
+    './Tools/pixelpeek',
     'https://cdn.jsdelivr.net/gh/nocturnestu/NOCTURNE_Library@main/nocturneassets/logo.png',
     'https://cdn.jsdelivr.net/gh/nocturnestu/NOCTURNE_Library@main/nocturneassets/logo2.png',
     'https://cdn.jsdelivr.net/gh/nocturnestu/NOCTURNE_Library@main/nocturneassets/logo192.png',

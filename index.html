@@ -1534,7 +1534,7 @@
         }
 
         html:not(.prism-installed) #recache-btn,
-        html:not(.prism-installed) .storage-heading {
+        html:not(.prism-installed) .storage-heading, .developer-heading {
             display: none !important;
         }
 
@@ -1675,11 +1675,15 @@
             touch-action: none;
         }
 
+        #dev-preview-toggle { display: none; }
+        html.prism-installed #dev-preview-toggle { display: flex; }
+
     </style>
 </head>
 
 <body>
     <div class="bg-gif"></div>
+    <video id="bg-video" autoplay loop muted playsinline style="display: none; position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; opacity: 0.5; pointer-events: none; filter: brightness(0.75) saturate(0.6);"></video>
     <div class="bg-overlay"></div>
     <div id="cursor-glow"></div>
 
@@ -1997,6 +2001,14 @@
                     </div>
                     <i class="material-icons-round item-arrow">chevron_right</i>
                 </a>
+                <a href="./Other/coinsort" class="list-item" onclick="createRipple(event)">
+                    <i class="material-icons-round item-icon">web_asset</i>
+                    <div class="item-content">
+                        <div class="item-title">Coin Sort</div>
+                        <div class="item-subtitle">Coin Sorting Game</div>
+                    </div>
+                    <i class="material-icons-round item-arrow">chevron_right</i>
+                </a>
             </div>
         </div>
     </div>
@@ -2021,7 +2033,6 @@
                     <i class="material-icons-round item-arrow">chevron_right</i>
                 </a>
 
-                <!--
                 <a href="./Tools/pixelpeek" class="list-item" onclick="createRipple(event)">
                     <i class="material-icons-round item-icon">build</i>
                     <div class="item-content">
@@ -2030,7 +2041,6 @@
                     </div>
                     <i class="material-icons-round item-arrow">chevron_right</i>
                 </a>
-                -->
                 
             </div>
         </div>
@@ -2059,6 +2069,26 @@
                     </div>
                 </div>
                 <i class="material-icons-round" id="toggle-icon">toggle_on</i>
+            </div>
+
+            <div class="list-item" id="dev-video-upload-card"
+                style="display: none; flex-direction: column; align-items: flex-start; gap: 10px; margin-top: 12px; cursor: default;">
+                <div style="display: flex; align-items: center; gap: 14px; width: 100%;">
+                    <i class="material-icons-round item-icon">video_settings</i>
+                    <div class="item-content">
+                        <div class="item-title">Custom Video Background</div>
+                        <div class="item-subtitle">Upload video file to cache as background</div>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 8px; width: 100%;">
+                    <input type="file" id="video-bg-file-input" accept="video/*" style="display: none;" onclick="this.value = null"
+                        onchange="PrismVideoBg.handleUpload(this.files[0])">
+                    <button class="setting-select" style="margin-top: 0; flex: 1; text-align: center;"
+                        onclick="document.getElementById('video-bg-file-input').click()">Choose Video</button>
+                    <button class="setting-select" id="clear-video-bg-btn"
+                        style="margin-top: 0; width: auto; display: none; color: #f87171;"
+                        onclick="PrismVideoBg.removeVideo()">Clear</button>
+                </div>
             </div>
 
             <h3 style="font-family: 'Space Grotesk'; font-size: 16px; margin-top: 20px; margin-bottom: 8px;">GIF Presets</h3>
@@ -2125,6 +2155,19 @@
                 <div class="item-title">Include Additional Assets</div>
                 <div class="item-subtitle">Enabling this allows Prism to update other assets, may consume more data.</div>
             </div>
+        </div>
+
+        <h3 class="developer-heading" style="font-family: 'Space Grotesk'; font-size: 16px; margin-top: 24px; margin-bottom: 12px;">Developer</h3>
+        <div class="list-item" id="dev-preview-toggle" style="cursor: pointer; justify-content: space-between;"
+            onclick="toggleDevPreviewMode()">
+            <div style="display: flex; align-items: center; gap: 14px;">
+                <i class="material-icons-round item-icon">code</i>
+                <div class="item-content">
+                    <div class="item-title">Developer Preview Mode</div>
+                    <div class="item-subtitle">For testing purposes only. Enables experimental/unfinished features.</div>
+                </div>
+            </div>
+            <i class="material-icons-round" id="icon-dev-preview">toggle_off</i>
         </div>
 
         <div id="sw-version-display" style="display: none; position: absolute; top: 16px; right: 20px; font-size: 11px; opacity: 0.35; font-family: 'Space Grotesk', sans-serif; pointer-events: none; user-select: none;"></div>
@@ -2325,6 +2368,45 @@
             icon.classList.toggle('toggle-on', _includeGames);
         }
 
+        const DEV_PREVIEW_KEY = 'dev-preview-mode';
+
+        function setDevPreviewMode(value) {
+            localStorage.setItem(DEV_PREVIEW_KEY, value);
+            window.dispatchEvent(new CustomEvent('dev-preview-change', { detail: { enabled: value === 'true' } }));
+        }
+
+        function toggleDevPreviewMode() {
+            const isCurrentlyOn = localStorage.getItem(DEV_PREVIEW_KEY) === 'true';
+            const icon = document.getElementById('icon-dev-preview');
+
+            if (!isCurrentlyOn) {
+                if (!confirm('Prism Developer Preview Mode\n\nThis enables experimental/unfinished features intended for testing purposes only. Things may break.\n\nProceed?')) return;
+                setDevPreviewMode('true');
+                icon.textContent = 'toggle_on';
+                icon.style.color = 'var(--primary)';
+            } else {
+                if (!confirm('Prism Developer Preview Mode?\n\nThis will turn off experimental/testing features across Prism. Proceed?')) return;
+                setDevPreviewMode('false');
+                icon.textContent = 'toggle_off';
+                icon.style.color = 'var(--text-muted)';
+            }
+        }
+
+        (function initDevPreviewState() {
+            const isOn = localStorage.getItem(DEV_PREVIEW_KEY) === 'true';
+            const icon = document.getElementById('icon-dev-preview');
+            const videoCard = document.getElementById('dev-video-upload-card');
+            if (isOn) {
+                if (icon) {
+                    icon.textContent = 'toggle_on';
+                    icon.style.color = 'var(--primary)';
+                }
+                if (videoCard) videoCard.style.display = 'flex';
+            } else {
+                if (videoCard) videoCard.style.display = 'none';
+            }
+        })();
+
         function confirmAndRecache() {
             const gameWarning = _includeGames ? '\n\nGame assets included for download.' : '\n\nCore files only. Game assets excluded.';
             if (!confirm(`Prism Download Mode\nCAUTION!\n\nPrism will delete old content and replace them with newer ones. Proceed?${gameWarning}\n\nYes, proceed. (OK)\nNo, do not proceed. (Cancel)`)) return;
@@ -2513,7 +2595,9 @@
                     './Other/notmoving',
                     './Other/gifview',
                     './Other/mathlol',
+                    './Other/coinsort',
                     './Tools/lapscan',
+                    './Tools/pixelpeek',
                     'https://cdn.jsdelivr.net/gh/nocturnestu/NOCTURNE_Library@main/nocturneassets/logo.png',
                     'https://cdn.jsdelivr.net/gh/nocturnestu/NOCTURNE_Library@main/nocturneassets/logo2.png',
                     'https://cdn.jsdelivr.net/gh/nocturnestu/NOCTURNE_Library@main/nocturneassets/logo192.png',
@@ -3140,6 +3224,140 @@
                 }, true);
             });
         })();
+
+        const PrismVideoBg = (function () {
+            const DB_NAME = 'PrismVideoCacheDB';
+            const STORE_NAME = 'videos';
+            const KEY = 'custom_bg_video';
+
+            function openDB() {
+                return new Promise((resolve, reject) => {
+                    const req = indexedDB.open(DB_NAME, 1);
+                    req.onupgradeneeded = (e) => {
+                        const db = e.target.result;
+                        if (!db.objectStoreNames.contains(STORE_NAME)) {
+                            db.createObjectStore(STORE_NAME);
+                        }
+                    };
+                    req.onsuccess = (e) => resolve(e.target.result);
+                    req.onerror = (e) => reject(e.target.error);
+                });
+            }
+
+            async function saveVideoBlob(blob) {
+                const db = await openDB();
+                return new Promise((resolve, reject) => {
+                    const tx = db.transaction(STORE_NAME, 'readwrite');
+                    const store = tx.objectStore(STORE_NAME);
+                    const req = store.put(blob, KEY);
+                    req.onsuccess = () => resolve();
+                    req.onerror = (e) => reject(e.target.error);
+                });
+            }
+
+            async function getVideoBlob() {
+                const db = await openDB();
+                return new Promise((resolve, reject) => {
+                    const tx = db.transaction(STORE_NAME, 'readonly');
+                    const store = tx.objectStore(STORE_NAME);
+                    const req = store.get(KEY);
+                    req.onsuccess = (e) => resolve(e.target.result);
+                    req.onerror = (e) => reject(e.target.error);
+                });
+            }
+
+            async function deleteVideoBlob() {
+                const db = await openDB();
+                return new Promise((resolve, reject) => {
+                    const tx = db.transaction(STORE_NAME, 'readwrite');
+                    const store = tx.objectStore(STORE_NAME);
+                    const req = store.delete(KEY);
+                    req.onsuccess = () => resolve();
+                    req.onerror = (e) => reject(e.target.error);
+                });
+            }
+
+            async function applyVideo() {
+                const videoEl = document.getElementById('bg-video');
+                const gifEl = document.querySelector('.bg-gif');
+                const clearBtn = document.getElementById('clear-video-bg-btn');
+                if (!videoEl) return;
+
+                try {
+                    const blob = await getVideoBlob();
+                    if (blob) {
+                        if (videoEl.src) URL.revokeObjectURL(videoEl.src);
+                        videoEl.src = URL.createObjectURL(blob);
+                        videoEl.style.display = 'block';
+                        if (gifEl) gifEl.style.display = 'none';
+                        if (clearBtn) clearBtn.style.display = 'inline-block';
+                    } else {
+                        if (videoEl.src) URL.revokeObjectURL(videoEl.src);
+                        videoEl.removeAttribute('src');
+                        videoEl.style.display = 'none';
+                        if (gifEl && localStorage.getItem('bg-gif-enabled') !== 'false') {
+                            gifEl.style.display = 'block';
+                        }
+                        if (clearBtn) clearBtn.style.display = 'none';
+                    }
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+
+            function syncDevVisibility() {
+                const card = document.getElementById('dev-video-upload-card');
+                const isDev = localStorage.getItem('dev-preview-mode') === 'true';
+                if (card) {
+                    card.style.display = isDev ? 'flex' : 'none';
+                }
+            }
+
+            async function handleUpload(file) {
+                if (!file || !file.type.startsWith('video/')) return;
+                await deleteVideoBlob();
+                await saveVideoBlob(file);
+                await applyVideo();
+            }
+
+            async function removeVideo() {
+                await deleteVideoBlob();
+                await applyVideo();
+            }
+
+            function handleDevPreviewChange(enabled) {
+                syncDevVisibility();
+                if (!enabled) removeVideo();
+            }
+
+            window.addEventListener('DOMContentLoaded', () => {
+                syncDevVisibility();
+                applyVideo();
+            });
+
+            window.addEventListener('dev-preview-change', (e) => {
+                handleDevPreviewChange(e.detail.enabled);
+            });
+
+            window.addEventListener('storage', (e) => {
+                if (e.key === 'dev-preview-mode') {
+                    handleDevPreviewChange(e.newValue === 'true');
+                }
+            });
+
+            return {
+                handleUpload,
+                removeVideo,
+                syncDevVisibility,
+                applyVideo
+            };
+        })();
+
+        /* --- DPM localstorage key listener ---
+        window.addEventListener('dev-preview-change', (e) => {
+            // for DPM-exclusive features, use this listener for show/hide/cleanup DPM-only features
+        });
+        */
     </script>
     <script>
         if ('serviceWorker' in navigator) {
@@ -3157,7 +3375,7 @@
 
                     if (savedVersion !== liveVersion) {
                         if (isStandalone) {
-                            const ok = confirm(`Prism Download Mode\n\nPrism found new content: ${liveVersion}\n\nDo you want to update now?\n\nYes, update my Prism. (OK)\nNo, do not update my Prism yet. (Cancel)`);
+                            const ok = confirm(`Prism Download Mode\n\nPrism found a new version: ${liveVersion}\n\nDo you want to update now?\n\nYes, update my Prism. (OK)\nNo, do not update my Prism yet. (Cancel)`);
                             if (ok) {
                                 killStartupLoader();
                                 localStorage.setItem(SW_VERSION_KEY, liveVersion);

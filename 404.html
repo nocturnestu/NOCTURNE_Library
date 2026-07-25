@@ -280,6 +280,7 @@
     <div class="bg-overlay"></div>
 
     <div class="bg-gif"></div>
+    <video id="bg-video" autoplay loop muted playsinline style="display: none; position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; opacity: 0.5; pointer-events: none; filter: brightness(0.75) saturate(0.6);"></video>
 
     <div class="page-wrapper">
 
@@ -288,7 +289,7 @@
                 <img src="https://cdn.jsdelivr.net/gh/nocturnestu/NOCTURNE_Library@main/nocturneassets/logo2.png" alt="..." class="topbar-logo">
                 <span class="topbar-name">PRISM</span>
             </a>
-            <div class="topbar-pill">SHATTER</div>
+            <div class="topbar-pill">NOT FOUND</div>
         </div>
 
         <div class="hero-card">
@@ -439,6 +440,105 @@
                 document.addEventListener('DOMContentLoaded', handleChange);
             } else {
                 handleChange();
+            }
+        })();
+
+        (function () {
+            const DB_NAME = 'PrismVideoCacheDB';
+            const STORE_NAME = 'videos';
+            const KEY = 'custom_bg_video';
+
+            function ensureVideoElement() {
+                let videoEl = document.getElementById('bg-video');
+                if (!videoEl) {
+                    videoEl = document.createElement('video');
+                    videoEl.id = 'bg-video';
+                    videoEl.autoplay = true;
+                    videoEl.loop = true;
+                    videoEl.muted = true;
+                    videoEl.playsInline = true;
+                    Object.assign(videoEl.style, {
+                        position: 'fixed',
+                        inset: '0',
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        zIndex: '0',
+                        opacity: '0.5',
+                        pointerEvents: 'none',
+                        filter: 'brightness(0.75) saturate(0.6)',
+                        display: 'none'
+                    });
+                    const bgGif = document.querySelector('.bg-gif');
+                    if (bgGif && bgGif.parentNode) {
+                        bgGif.parentNode.insertBefore(videoEl, bgGif);
+                    } else {
+                        document.body.prepend(videoEl);
+                    }
+                }
+                return videoEl;
+            }
+
+            function openDB() {
+                return new Promise((resolve, reject) => {
+                    const req = indexedDB.open(DB_NAME, 1);
+                    req.onupgradeneeded = (e) => {
+                        const db = e.target.result;
+                        if (!db.objectStoreNames.contains(STORE_NAME)) {
+                            db.createObjectStore(STORE_NAME);
+                        }
+                    };
+                    req.onsuccess = (e) => resolve(e.target.result);
+                    req.onerror = (e) => reject(e.target.error);
+                });
+            }
+
+            async function getVideoBlob() {
+                const db = await openDB();
+                return new Promise((resolve, reject) => {
+                    const tx = db.transaction(STORE_NAME, 'readonly');
+                    const store = tx.objectStore(STORE_NAME);
+                    const req = store.get(KEY);
+                    req.onsuccess = (e) => resolve(e.target.result);
+                    req.onerror = (e) => reject(e.target.error);
+                });
+            }
+
+            async function syncBackground() {
+                const videoEl = ensureVideoElement();
+                const gifEl = document.querySelector('.bg-gif');
+
+                try {
+                    const blob = await getVideoBlob();
+                    if (blob) {
+                        if (videoEl.src) URL.revokeObjectURL(videoEl.src);
+                        videoEl.src = URL.createObjectURL(blob);
+                        videoEl.style.display = 'block';
+                        if (gifEl) gifEl.style.display = 'none';
+                        videoEl.play().catch(() => { });
+                    } else {
+                        if (videoEl.src) URL.revokeObjectURL(videoEl.src);
+                        videoEl.removeAttribute('src');
+                        videoEl.style.display = 'none';
+                        if (gifEl && localStorage.getItem('bg-gif-enabled') !== 'false' && navigator.onLine) {
+                            gifEl.style.display = 'block';
+                        }
+                    }
+                } catch (e) {
+                    if (videoEl.src) URL.revokeObjectURL(videoEl.src);
+                    videoEl.style.display = 'none';
+                    if (gifEl && localStorage.getItem('bg-gif-enabled') !== 'false' && navigator.onLine) {
+                        gifEl.style.display = 'block';
+                    }
+                }
+            }
+
+            window.addEventListener('storage', syncBackground);
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', syncBackground);
+            } else {
+                syncBackground();
             }
         })();
     </script>

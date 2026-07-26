@@ -1534,7 +1534,8 @@
         }
 
         html:not(.prism-installed) #recache-btn,
-        html:not(.prism-installed) .storage-heading, .developer-heading {
+        html:not(.prism-installed) .storage-heading,
+        html:not(.prism-installed) .developer-heading {
             display: none !important;
         }
 
@@ -1675,8 +1676,8 @@
             touch-action: none;
         }
 
-        #dev-preview-toggle, .developer-heading { display: none; }
-        html.prism-installed #dev-preview-toggle, .developer-heading { display: flex; }
+        #dev-preview-toggle { display: none; }
+        html.prism-installed #dev-preview-toggle { display: flex; }
 
     </style>
 </head>
@@ -2085,6 +2086,9 @@
                         onchange="PrismVideoBg.handleUpload(this.files[0])">
                     <button class="setting-select" style="margin-top: 0; flex: 1; text-align: center;"
                         onclick="document.getElementById('video-bg-file-input').click()">Choose Video</button>
+                    <button class="setting-select" id="refresh-video-bg-btn"
+                        style="margin-top: 0; width: auto; display: none;"
+                        onclick="PrismVideoBg.refreshVideo()">↻ Refresh</button>
                     <button class="setting-select" id="clear-video-bg-btn"
                         style="margin-top: 0; width: auto; display: none; color: #f87171;"
                         onclick="PrismVideoBg.removeVideo()">Clear</button>
@@ -3281,6 +3285,8 @@
                 const videoEl = document.getElementById('bg-video');
                 const gifEl = document.querySelector('.bg-gif');
                 const clearBtn = document.getElementById('clear-video-bg-btn');
+                const refreshBtn = document.getElementById('refresh-video-bg-btn');
+
                 if (!videoEl) return;
 
                 try {
@@ -3291,6 +3297,7 @@
                         videoEl.style.display = 'block';
                         if (gifEl) gifEl.style.display = 'none';
                         if (clearBtn) clearBtn.style.display = 'inline-block';
+                        if (refreshBtn) refreshBtn.style.display = 'inline-block';
                     } else {
                         if (videoEl.src) URL.revokeObjectURL(videoEl.src);
                         videoEl.removeAttribute('src');
@@ -3299,10 +3306,20 @@
                             gifEl.style.display = 'block';
                         }
                         if (clearBtn) clearBtn.style.display = 'none';
+                        if (refreshBtn) refreshBtn.style.display = 'none';
                     }
                 } catch (e) {
                     console.error(e);
                 }
+            }
+
+            function refreshVideo() {
+                const videoEl = document.getElementById('bg-video');
+                if (!videoEl) return;
+                videoEl.pause();
+                videoEl.currentTime = 0;
+                videoEl.load();
+                videoEl.play().catch(() => { });
             }
 
             function syncDevVisibility() {
@@ -3348,16 +3365,11 @@
             return {
                 handleUpload,
                 removeVideo,
+                refreshVideo,
                 syncDevVisibility,
                 applyVideo
             };
         })();
-
-        /* --- DPM localstorage key listener ---
-        window.addEventListener('dev-preview-change', (e) => {
-            // for DPM-exclusive features, use this listener for show/hide/cleanup DPM-only features
-        });
-        */
     </script>
     <script>
         if ('serviceWorker' in navigator) {

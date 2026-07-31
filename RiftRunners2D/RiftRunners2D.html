@@ -616,7 +616,7 @@
     <button id="close-shop-btn" class="menu-btn" style="margin-top:10px;">Back</button>
   </div>
 
-  <div id="rr-version-tag">RIFT VERSION: v2.5.0</div>
+  <div id="rr-version-tag">RIFT VERSION: v2.6.0</div>
   
   <script>
     window.rrConfig = JSON.parse(localStorage.getItem('rr_custom_config')) || {
@@ -1302,6 +1302,7 @@
           document.getElementById('wpn-zapper').classList.add('active');
           window.switchWpn = (type) => {
             if (this.pState.reloading || this.pState.currentWeapon === type) return;
+            this.playSfx(500, 'square', 0.08);
             this.pState.weapons[this.pState.currentWeapon].ammo = this.pState.ammo;
             this.pState.currentWeapon = type;
             this.pState.ammo = this.pState.weapons[type].ammo;
@@ -1529,8 +1530,24 @@
           }
           return null;
         }
+        playSfx(freq, type = 'sine', duration = 0.1, volDrop = 0.00001) {
+          if (!this._audioCtx) this._audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          const ctx = this._audioCtx;
+          if (ctx.state === 'suspended') ctx.resume();
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = type;
+          osc.frequency.setValueAtTime(freq, ctx.currentTime);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start();
+          gain.gain.setValueAtTime(1, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(volDrop, ctx.currentTime + duration);
+          osc.stop(ctx.currentTime + duration);
+        }
         shoot() {
           if (this.pState.ammo <= 0) {
+            this.playSfx(150, 'square', 0.05);
             if (!this.pState.reloading) this.startReload();
             return;
           }
@@ -1539,21 +1556,25 @@
           const wpnData = this.pState.weapons[wpnType];
           if (wpnType === 'zapper') {
             this.cameras.main.shake(50, 0.002);
+            this.playSfx(900, 'square', 0.06);
             const proj = this._makeBullet(this.bullets, this.player.x + Math.cos(angle) * 20, this.player.y + Math.sin(angle) * 20, 'bullet', angle, 800);
             proj.wpnType = 'zapper';
           } else if (wpnType === 'shotgun') {
             this.cameras.main.shake(100, 0.005);
+            this.playSfx(180, 'sawtooth', 0.18);
             [-0.2, -0.1, 0, 0.1, 0.2].forEach(s => {
               const proj = this._makeBullet(this.bullets, this.player.x + Math.cos(angle + s) * 20, this.player.y + Math.sin(angle + s) * 20, 'bullet', angle + s, 700);
               proj.wpnType = 'shotgun';
             });
           } else if (wpnType === 'bazooka') {
             this.cameras.main.shake(150, 0.008);
+            this.playSfx(120, 'sawtooth', 0.3);
             const proj = this._makeBullet(this.bullets, this.player.x + Math.cos(angle) * 20, this.player.y + Math.sin(angle) * 20, 'rocket', angle, 500);
             proj.isRocket = true;
             proj.wpnType = 'bazooka';
           } else if (wpnType === 'grenade') {
             this.cameras.main.shake(80, 0.004);
+            this.playSfx(300, 'triangle', 0.12);
             const proj = this._makeBullet(this.bullets, this.player.x + Math.cos(angle) * 20, this.player.y + Math.sin(angle) * 20, 'grenade', angle, 400);
             proj.isGrenade = true;
             proj.wpnType = 'grenade';
@@ -1571,6 +1592,7 @@
             });
           } else if (wpnType === 'nuke') {
             this.cameras.main.shake(200, 0.015);
+            this.playSfx(60, 'sawtooth', 0.6);
             const proj = this._makeBullet(this.bullets, this.player.x + Math.cos(angle) * 20, this.player.y + Math.sin(angle) * 20, 'nuke_proj', angle, 600);
             proj.isNuke = true;
           }
@@ -1584,6 +1606,7 @@
           }
         }
         startReload() {
+          this.playSfx(400, 'sine', 0.15);
           this.pState.reloading = true;
           const wpn = this.pState.weapons[this.pState.currentWeapon];
           this.pState.reloadTimer = wpn.reloadTimer;
@@ -1630,6 +1653,7 @@
             return;
           }
           bullet.destroy();
+          this.playSfx(500, 'square', 0.04);
           let baseDmg = 1.5;
           if (bullet.wpnType === 'zapper') {
             baseDmg *= (1.5 + (upg.zapperDmg || 0) * 0.30);
@@ -1641,6 +1665,7 @@
           this.time.delayedCall(50, () => { if (enemy.active) enemy.clearTint(); });
           this.spawnParticles(enemy.x, enemy.y, enemy.eType.tint, 5);
           if (enemy.hp <= 0) {
+            this.playSfx(enemy.isBoss ? 90 : 250, 'sawtooth', enemy.isBoss ? 0.8 : 0.15);
             this.pState.score += enemy.eType.score;
             this.spawnParticles(enemy.x, enemy.y, enemy.eType.tint, enemy.isBoss ? 100 : 15);
             if (Math.random() < 0.15 && !enemy.isBoss) {
@@ -1660,6 +1685,7 @@
           }
         }
         aoeExplode(x, y, radius, damage) {
+          this.playSfx(200, 'sawtooth', 0.35);
           this.spawnParticles(x, y, 0xffcc33, 25);
           this.cameras.main.flash(100, 255, 200, 50, true);
           this.enemies.getChildren().forEach(enemy => {
@@ -1690,6 +1716,7 @@
           });
         }
         nukeExplode(x, y) {
+          this.playSfx(50, 'sawtooth', 1.2);
           this.spawnParticles(x, y, 0xffffff, 120);
           this.cameras.main.flash(400, 255, 255, 255, true);
           this.cameras.main.shake(800, 0.04);
@@ -1738,6 +1765,7 @@
               this.pState.shieldHp -= damage;
               if (this.pState.shieldHp <= 0) {
                 this.pState.shieldActive = false;
+                this.playSfx(80, 'sawtooth', 0.4);
                 this.logFeed('SHIELD SHATTERED');
                 this.pState.hp += this.pState.shieldHp;
               }
@@ -1772,6 +1800,7 @@
         hitPlayer(player, enemy) {
           if (this.pState.hp <= 0) return;
           if (this.pState.invincible > 0 || this.pState.isDashing) return;
+          this.playSfx(120, 'sawtooth', 0.2);
 
           const dmg = (enemy.isBoss ? 30 : 15) * (1 + (this.gState.level * 0.2));
           this.cameras.main.shake(200, 0.01);
@@ -1837,6 +1866,7 @@
           if (!powerup.active) return;
           const key = powerup.texture.key;
           powerup.destroy();
+          this.playSfx(key === 'powerup_nuke' ? 900 : 800, key === 'powerup_nuke' ? 'sawtooth' : 'sine', key === 'powerup_nuke' ? 0.3 : 0.15);
           if (key === 'powerup_freeze') {
             this.logFeed('RIFT OVERRIDE: CRYOGENIC FREEZE ACTIVATED');
             this.enemies.getChildren().forEach(enemy => {
@@ -1876,6 +1906,7 @@
         collectHealCircle(player, circle) {
           if (!circle.active) return;
           circle.destroy();
+          this.playSfx(650, 'sine', 0.15);
           this.pState.hp = Math.min(this.pState.maxHp, this.pState.hp + 35);
           this.logFeed('HEAL ENFORCED: Integrity Buffed +35');
           this.updateDOM();
@@ -1984,6 +2015,7 @@
           setTimeout(() => el.remove(), 2500);
         }
         gameOver() {
+          this.playSfx(200, 'sawtooth', 1.2);
           this.gState.isPlaying = false;
           this.isShooting = false;
           this.physics.pause();
@@ -2122,6 +2154,7 @@
             this.pState.isDashing = true;
             this.pState.dashCooldown = 1500;
             this.time.delayedCall(200, () => { this.pState.isDashing = false; });
+            this.playSfx(1000, 'sine', 0.1);
             this.spawnParticles(this.player.x, this.player.y, 0xc8b8ff, 10);
             this.cameras.main.shake(100, 0.005);
           }
@@ -2164,6 +2197,7 @@
             this.pState.reloadTimer -= delta;
             if (this.pState.reloadTimer <= 0) {
               this.pState.reloading = false;
+              this.playSfx(700, 'sine', 0.1);
               this.pState.ammo = this.pState.maxAmmo;
               ammoCounter.dataset.prevAmmo = this.pState.maxAmmo;
               this.logFeed('Ammo Replenished');
